@@ -1,5 +1,19 @@
 # esa2021
+
 ESA 2021 workshop: community analysis of species, traits, phylogenies, and responses to environment
+
+
+### Session principles
+- broad-and-shallow topic coverage  
+- use base R and other FOSS (free and open-source software)  
+- require minimal dependencies  
+
+
+### Session audience
+- Researchers and academics  
+- Forest and grassland managers  
+- Computational ecologists  
+- Students and early-career vegetation ecologists  
 
 
 ### Installation
@@ -8,6 +22,7 @@ ESA 2021 workshop: community analysis of species, traits, phylogenies, and respo
 2. Download and install the `esa2021` package.
 3. Install the `learnr` package.
 4. Follow instructions below.
+
 
 ### Usage
 
@@ -21,4 +36,6 @@ learnr::run_tutorial('esa_tutorial', package = 'esa2021')
 
 ### Contributors
 
-Rob Smith, robert.smith3@usda.gov
+**Organizer**: Kyle Palmquist  
+**Co-organizers**: Martin Dovciak, Samuel Jordan, Lisa Kluesner, Rob Smith (robert.smith3@usda.gov)  
+
