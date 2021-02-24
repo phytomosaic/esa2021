@@ -1,0 +1,800 @@
+---
+title: "ESA 2021"
+# author: "Rob Smith"
+output:
+  learnr::tutorial:
+    css: css/custom.css
+    fig_width: 5.5
+    fig_height: 5.5
+    # ace_theme: "cobalt"
+    progressive: false
+    toc: true
+    toc_depth: 6
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+runtime: shiny_prerendered
+description: "Community analysis of species, traits, phylogenies, and responses to environment."
+---
+
+```{r begin, include=FALSE, eval=TRUE}
+require(learnr)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, include = TRUE)
+knitr::knit_theme$set("rootwater")
+learnr::tutorial_options(exercise.timelimit = 10, exercise.eval = FALSE, exercise.completion = TRUE)
+```
+
+```{r setup, include=FALSE}
+### HIDDEN ###
+require(vegan)
+require(labdsv)
+require(ade4)
+require(optpart)
+require(ape)
+require(picante)
+require(mgcv)
+require(viridis)
+cv <- viridis::viridis(n=99, alpha=0.9, begin=0.2, end=0.9)
+`colvec` <- function(x) {
+     return(cv[cut(x, breaks=length(cv), include.lowest=TRUE)])
+}
+load('veg.rda')  # assumed to be in your working dir
+xy  <- veg$xy    # spatial
+spe <- veg$spe   # species
+env <- veg$env   # environment
+tra <- veg$tra   # traits
+phy <- veg$phy   # phylogeny
+rm(veg)          # cleanup
+spe <- data.frame(log10(spe + 1))
+env <- data.frame(decostand(scale(env, center=F), 'range'))
+tra <- data.frame(decostand(tra, 'range'))
+d   <- vegdist(spe, method='bray', binary=T)
+D   <- stepacross(d, 'shortest', toolong = 1)
+m1  <- metaMDS(D, k=2, try=200, trymax=500, trace=0)  # NMS
+m2  <- cmdscale(D, k=2, add=T)               # PCoA
+m3  <- prcomp(spe)                           # PCA
+### HIDDEN ###
+```
+
+## Overview
+
+#### *Why are we here today?* {#why-here}
+
+This course demonstrates **the practice of ecological community analysis in R**.  We borrow and apply concepts from ecology, statistics and computer science, but do not get too bogged down in theoretical details.  This short course aims to be an [axe handle](https://www.poetryfoundation.org/poems/57150/axe-handles){target="_blank"} --- carve and shape it to your own practice.
+
+### Worldview
+
+Biological reality $\Longleftrightarrow$ Conceptual model  $\Longleftrightarrow$   Mathematical model  
+
+### Why community analysis?
+
+Redundancy.  Better gradient coverage.  No need to track rare/hard-to-detect taxa.  Insight into possible *mechanisms* via traits and phylogenetic relationships.
+
+
+
+## Setup
+
+#### *How do I use the software?*
+
+### Installation
+
+Open R and install required packages as follows.  Packages contain supplemental functions you will need.  
+
+```{r installation, exercise=FALSE, eval=FALSE}
+install.packages('vegan')   # community ecology
+install.packages('labdsv')  # community ecology
+install.packages('ade4')    # community ecology
+install.packages('optpart') # clustering
+install.packages('ape')     # phylogenetics
+install.packages('picante') # phylogenetics
+install.packages('mgcv')    # nonlinear regression
+install.packages('viridis') # color palettes
+```
+
+### Load packages
+
+To use functions provided by packages, load them into your R environment.
+
+```{r load-pkgs, exercise=FALSE, eval=FALSE}
+require(vegan)
+require(labdsv)
+require(ade4)
+require(optpart)
+require(ape)
+require(picante)
+require(mgcv)
+require(viridis)
+# remotes::install_github('phytomosaic/ecole')
+```
+
+### Define custom functions
+
+In R, you can define your own functions of the generic form `f <- function(x) { x }`.  For example, let's define a few useful convenience functions here.
+
+```{r convenience, exercise=FALSE, eval=FALSE}
+# object: a default color vector
+cv <- viridis::viridis(n=99, alpha=0.9, begin=0.2, end=0.9)
+
+# function: maps a numeric-valued vector to colors
+`colvec` <- function(x) {
+     return(cv[cut(x, breaks=length(cv), include.lowest=TRUE)])
+}
+```
+
+
+
+## Data background
+
+#### *Where did this dataset originate, and what does it mean?*
+
+### Mafragh, Algeria vegetation data
+
+The `veg` dataset gives information about spatial coordinates, species, environment, traits, and phylogeny for plants on a coastal plain in North Africa.  Specifically, `veg` is a list containing:
+
+* `xy`  \tab 97 observations of 2 spatial coordinates
+* `spe` \tab 97 observations of 56 plant species
+* `env` \tab 347 observations of 11 soil enviro variables
+* `tra` \tab 12 traits for 56 plant species
+* `phy` \tab phylogeny for 56 plant species
+
+### Study area description
+
+The Mafragh plain is in El Tarf Province of far northeast Algeria (36.84704$^{\circ}$, 7.945$^{\circ}$).  According to documentation in R package `ade4`:
+
+> This marshy coastal plain is a geomorphological feature, east of Port of Annaba, limited to the north by the Mediterranean Sea and a dune cordon, to the south by clay-sandstone Numidian massifs, to the west by a wadi and to East by an irrigated perimeter. It covers 15,000 ha of which 10,000 form the area of study.
+
+Potential human pressures include grazing, irrigation and salination, plowing, and housing development.  Its Köppen climate type is "Csa: Hot-summer Mediterranean climate".
+
+### History of the Mafragh dataset
+
+The data originate from the field studies of Prof. Gérard de Bélair of Annaba in northeast Algeria.  Born in France, de Bélair became a missionary priest in 1969 shortly after Algeria's independence, then an agronomist during the Agrarian Revolution, then a botanist, then professor, then conservationist (according to his [lay](http://gdebelair.com/itineraire.html) and [clergy](https://www.visages-diocese-autun.fr/visage/de-belair-gerard/) accounts).  As of 2021, he continues to actively publish on the vegetation of northern Algeria.  
+
+We should recognize colonialist legacies that brought us here.  France controlled Algeria from 1830 until its independence in 1962.  Prior to that, Algeria was occupied by Ottoman Turks, Spaniards, Arab Muslims, Berber/Amazigh, Romans, Phoenicians, and prehistoric occupants dating to at least 1.8 million years ago.  We may speculate that the region's vegetation and cultural histories have been closely intertwined.  
+
+The data were included in early versions of the `ade4` software (Dray and Dufour 2007) which itself has its roots at Université Lyon 1, France.  The present data are lightly modified from Appendix S4 of Pavoine et al. (2011), who also added a phylogeny.
+
+### References
+
+de Bélair, G. 1981. Biogéographie et aménagement de la Plaine de la Mafragh (Annaba - Algérie) [Biogeography and development of the Mafragh Plain (Annaba, Algeria)]. Dissertation, Université Paul Valéry, Montpellier. http://www.sudoc.fr/00871262X  
+
+de Bélair, G. 1990. Structure, fonctionnement et perspectives de gestion de quatre écocomplexes lacustres et marécageux (El Kala, Est-Algérien) [Structure, function and management perspectives of four lake and marsh eco-complexes (El Kala, East Algeria)]. Dissertation, Université des sciences et techniques de Montpellier 2. http://www.sudoc.fr/007729197  
+
+de Bélair, G. and M. Bencheikh-Lehocine. 1987. Composition et déterminisme de la végétation d'une plaine côtière marécageuse: La Mafragh (Annaba, Algérie) [Composition and determinism of the vegetation of a marshy coastal plain: La Mafragh (Annaba, Algeria)]. Bulletin d'Ecologie, 18(4): 393–407.  
+
+Dray, S. and A. Dufour. 2007. The `ade4` package: implementing the duality diagram for ecologists. Journal of Statistical Software 22(4): 1-20. [doi:10.18637/jss.v022.i04](https://doi.org/10.18637/jss.v022.i04)  
+
+Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linking patterns in phylogeny, traits, abiotic variables and space: a novel approach to linking environmental filtering and plant community assembly. Journal of Ecology 99: 165–175. [doi:10.1111/j.1365-2745.2010.01743.x](https://doi.org/10.1111/j.1365-2745.2010.01743.x)  
+
+
+
+## Data load
+
+#### *How do I get my data into the software?*
+
+### Load data
+
+A common task is to read from CSV files, e.g., `x <- read.csv('path/to/file.csv')`, but here we will load data that's already in R format.
+
+```{r data-load, exercise=FALSE, eval=FALSE}
+load('veg.rda')  # assumed to be in your working dir
+xy  <- veg$xy    # spatial
+spe <- veg$spe   # species
+env <- veg$env   # environment
+tra <- veg$tra   # traits
+phy <- veg$phy   # phylogeny
+rm(veg)          # cleanup
+ls()             # objects now in this environment
+```
+
+### Useful functions to explore
+
+```{r useful-functions, exercise=TRUE}
+?ls
+ls()          # list items in environment
+dim(spe)      # dimensions of an object
+NROW(spe)
+NCOL(spe)
+str(spe)
+head(spe)
+names(spe)
+x <- spe[,11]
+x <- spe[,'bolboschoenus_maritimus']
+hist(x)
+plot(x)
+rm(x)
+```
+
+
+## Pre-analysis
+
+#### *How do I get my data into shape for analysis?*
+
+### Check data structure
+
+```{r structure, exercise=TRUE}
+str(spe)     # community (species) abundance matrix
+str(env)     # environmental matrix
+str(tra)     # traits matrix
+str(phy, 1)  # phylogeny
+str(xy)      # spatial coordinates
+```
+
+### Find and replace troublesome values
+
+```{r replace-pesky, exercise=TRUE}
+# create example matrix with some pesky values
+s <- spe
+s[5,2] <- NA
+s[6,4] <- (-999)
+
+# index the row and column of any NA values
+which(is.na(s), arr.ind=TRUE)
+
+# index the row and column of any negative values
+which(s < 0, arr.ind=TRUE)
+
+# replace value by logical test
+s[is.na(s)] <- 777
+head(s)
+rm(s)
+```
+
+### Data transformations
+
+
+```{r transformations-setup, exercise=TRUE}
+### HIDDEN
+load('veg.rda')  # assumed to be in your working dir
+spe <- veg$spe   # species
+env <- veg$env   # environment
+tra <- veg$tra   # traits
+rm(veg)          # cleanup
+### HIDDEN
+```
+
+```{r transformations, exercise=TRUE, exercise.setup='transformations-setup'}
+### basic transformations
+spe <- data.frame(log10(spe + 1))
+env <- data.frame(decostand(scale(env, center=F), 'range'))
+tra <- data.frame(decostand(tra, 'range'))
+
+head(env)
+head(tra)
+```
+
+### Abundances to presence/absence
+
+```{r presence-absence, exercise=TRUE}
+s <- (spe > 0) * 1  # from numeric to 0/1
+s[1:5, 1:7]
+range(s)
+rm(s)
+```
+
+### Visualize data
+
+```{r viz-xy, exercise=TRUE}
+# spatial
+plot(xy, pch=19, col='#00000050', xlab='Eastness', ylab='Northness')
+```
+
+```{r viz-spe, exercise=TRUE}
+# species
+vegan::tabasco(spe, col=cv)
+```
+
+```{r viz-env, exercise=TRUE}
+# environment
+vegan::tabasco(env, col=cv)
+```
+
+```{r viz-tra, exercise=TRUE}
+# traits
+vegan::tabasco(tra, col=cv)
+```
+
+```{r viz-phy, exercise=TRUE}
+# phylogeny
+plot(phy, cex=0.6, no.margin=TRUE)
+```
+
+
+
+
+## Diversity measures
+
+#### *How diverse is this site? collection of sites? region?*
+
+Let's get an overview of the "diversity" of our sites and study area.  Diversity can encompass any sort of variation, e.g., taxonomic, trait, or phylogenetic.  Here we assume that `spe` is a species abundance matrix where rows = sites, columns = taxa, and values must not be negative or missing.
+
+### Species diversity
+
+```{r div-gam, exercise=TRUE}
+### Gamma (regional) diversity
+gamma <- sum(colSums(spe) > 0)
+gamma
+```
+```{r div-alf, exercise=TRUE}
+### Alpha (per-site) diversity
+alpha <- rowSums(spe > 0)
+alpha    # within-site
+avgalpha <- mean(rowSums(spe > 0))
+avgalpha # average within-site
+```
+```{r div-bet, exercise=TRUE}
+### Beta (among-site) diversity (Whittaker's)
+beta <- gamma / avgalpha - 1
+beta
+```
+```{r div-propz, exercise=TRUE}
+### Beta-diversity: proportion of zeros in matrix
+propzero <- sum(spe == 0) / prod(dim(spe))
+propzero
+
+### Beta-diversity: dust bunny index
+dbi <- 1 - mean(as.matrix(vegan::decostand(spe, method = 'max')))
+dbi
+```
+```{r div-noshare, exercise=TRUE}
+### Beta-diversity: how many site-pairs share no species in common?
+z <- vegan::no.shared(spe)
+propnoshare <- sum(z) / length(z)
+propnoshare
+```
+
+### Hill numbers and rarefaction
+
+```{r div-spaccum, exercise=TRUE}
+### High beta-diversity gives a shallow curve requiring more sites to accumulate species, low beta-diversity gives steep curve that saturates quickly with fewer sites.
+plot(vegan::specaccum(spe), ylab='Species')
+```
+
+
+
+### Trait diversity
+
+
+
+
+
+### Phylogenetic diversity
+
+Here.
+
+
+## Direct gradient analysis
+
+#### *How does this species (or trait, or ...) relate to an environmental gradient?*
+
+```{r direct-gradient-analysis, exercise=TRUE}
+# prepare vector data
+y <- rowSums((spe > 0) * 1)  # response vector = species richness
+x <- env[,'k']               # predictor vector = potassium concentration
+
+# fit two models
+mod_linear    <- stats::lm(y ~ x)                # simple linear model
+mod_nonlinear <- mgcv::gam(y ~ s(x), gamma=0.25) # nonlinear GAM model
+
+# view model summaries
+summary(mod_linear)
+summary(mod_nonlinear)
+
+# visualize fitted values
+plot(x, y, xlab='Potassium', ylab='Richness', pch=16, col='#00000050')
+xs <- seq(min(x), max(x), len = 99)
+lines(xs, predict(mod_linear, data.frame(x = xs)), lwd = 2, col='darkblue')
+lines(xs, predict(mod_nonlinear, data.frame(x = xs)), lwd = 2, col='orange')
+
+# cleanup 
+rm(y, x, xs, mod_linear, mod_nonlinear)
+```
+
+
+
+## Dissimilarities
+
+#### *How related are community compositions among any two sites?*
+
+### Dissimilarity matrix
+Create a pairwise dissimilarity matrix `D` based on shared and unshared species among sites.
+
+```{r dissimilarities, exercise=TRUE}
+d <- vegdist(spe, method='bray', binary=T)
+str(d)
+```
+
+### Stepacross adjustment
+
+```{r stepacross, exercise=TRUE}
+D <- stepacross(d, 'shortest', toolong = 1)
+str(D)
+plot(d, D, xlab = 'Original', ylab = 'Stepacross')
+```
+
+### Best subset of environmental predictors
+
+Which environmental predictors are most related to community compositions?  We can find this by maximizing the rank correlation between environmental distances and community dissimilarities, using the BIOENV procedure.
+
+```{r best-bioenv, exercise=TRUE}
+best <- bioenv(D, env=env[,sapply(env, is.numeric)], upto=3, trace=T)
+best
+```
+
+
+
+## Ordination (unconstrained)
+
+#### *How best to order sites by dissimilarities of community compositions?*
+
+Order sites according to community compositions.  Ordination distances indicate compositional dissimilarities.  Nearby points are more compositionally similar than distant points.
+
+```{r ordination, exercise=TRUE, exercise.timelimit=120}
+# three kinds of ordination
+m1 <- metaMDS(D, k=2, try=200, trymax=500)  # NMS
+m2 <- cmdscale(D, k=2, add=T)               # PCoA
+m3 <- prcomp(spe)                           # PCA
+```
+
+Plotting the ordinations.
+
+```{r ordination-plotting-01, exercise=TRUE}
+# color vector for plotting
+u <- viridis::viridis(nrow(spe), begin=0.2, end=0.9, alpha=0.9)
+
+# compare three kinds of ordination
+par(mfrow=c(1,3), bty='l', las=1)
+plot(m1$points, type='n', xlab='NMDS1', ylab='NMDS2')
+text(m1$points, rownames(m1$points),cex=.8, col=u)
+plot(m2$points, type='n', xlab='PCoA1', ylab='PCoA2')
+text(m2$points, rownames(m2$points),cex=.8, col=u)
+plot(m3$x, type='n', xlab='PCA1', ylab='PCA2')
+text(m3$x, rownames(m3$x),cex=.8, col=u)
+par(mfrow=c(1,1))
+```
+
+Ordination goodness-of-fit
+```{r ordination-goodness-of-fit, exercise=TRUE}
+# fit btwn ordination distances vs original species dissimilarities
+cor(dist(m1$points), D, method='kendall')
+cor(dist(m2$points), D, method='kendall')
+cor(dist(m3$x), D, method='kendall')
+# NMS is almost always the best choice -- it minimizes stress
+
+# fit btwn environmental distances vs original species dissimilarities
+pc <- prcomp(env[,sapply(env, is.numeric)], scale=T) # PCA of enviro
+pc <- scores(pc, display='sites', choices=1:2)       # PCA scores
+eD <- vegdist(pc, method='euc')  # Euclidean distances of scores
+mantel(D, eD)            # fit = Mantel statistic r
+protest(m1$points, pc)   # fit = correlation in Procrustes rotation
+rm(pc, eD, u)
+```
+
+Plotting again. 
+
+```{r ordination-plotting-02, exercise=TRUE}
+# overlay gradients using point colors
+par(mfrow=c(1,3), bty='l', las=1)
+plot(scores(m1), pch=16, col=colvec(env$k))
+plot(scores(m1), pch=16, col=colvec(env$k2o))
+plot(scores(m1), pch=16, col=colvec(env$sand))
+par(mfrow=c(1,1))
+
+# overlay gradients by fitting a GAM surface
+f1 <- ordisurf(m1 ~ env$k, plot = FALSE)
+plot(scores(m1), pch = 16, col = colvec(env$k))
+plot(f1, add = TRUE, col = 1, lwd = 2)
+```
+
+Dimensionality selection. 
+
+```{r dimensionality-selection, exercise=TRUE}
+# define screeplot function, running NMS for varying dimensions
+`scree_nms` <- function(kk = 5, ...) {
+     stress <- rep(NA, kk)
+     for (i in 1:kk) {
+          cat('calculating', i, 'of', kk, 'dimensions...\n')
+          m <- metaMDS(D, k=i, try=200, trymax=500, trace=0)
+          stress[i] <- m$stress
+     }
+     plot(1:kk, stress, main='', xlab='Dimension', ylab='Stress',
+          ylim=c(0, max(stress)*1.05), pch=16, las=1, bty='l')
+     lines(1:kk, stress)
+     abline(0.20, 0, col='red', lty = 2)
+     abline(0.15, 0, col='gold', lty = 2)
+     abline(0.10, 0, col='green', lty = 2)
+     data.matrix(stress)
+}
+scree <- scree_nms(kk = 5)  # 2 dimensions seems ok...
+scree
+```
+
+
+
+## Ordination (constrained)
+
+#### *How best to order sites by dissimilarities of community compositions,* after *accounting for measured environmental variables?*
+
+```{r ord-constrained, exercise=TRUE}
+# dbRDA: distance-based RDA
+m1 <- dbrda(D ~ k + sand + conductivity, 
+           data = env, 
+           comm = spe, 
+           add = 'lingoes')
+
+# RDA: redundancy analysis
+m2 <- rda(spe ~ k + sand + conductivity, data=env)
+
+# CCA: constrained correspondence analysis
+m3 <- cca(spe ~ k + sand + conductivity, data=env)
+
+# summaries
+m1
+m2
+m3
+
+# compare three kinds of ordination
+par(mfrow=c(1,3), bty='l', las=1)
+plot(m1)
+points(m1, pch=16, col=colvec(env$k))
+plot(m2)
+points(m2, pch=16, col=colvec(env$k))
+plot(m3)
+points(m3, pch=16, col=colvec(env$k))
+```
+
+
+
+
+## Group clustering
+
+#### *How to group sites according to dissimilarity of community compositions?*
+
+```{r clustering, exercise=TRUE}
+# clustering to form groups
+cl  <- hclust(D, method='ward.D2') # clustering solution
+grp <- cutree(cl, 4)               # group memberships
+
+# plot the clustering tree, and the cluster groups on an ordination
+par(mfrow=c(1,2), bty='l', las=1)
+plot(cl, col=grp, cex=0.7)
+rect.hclust(cl, 4, border=1:4)
+plot(scores(m1), pch=16, col=grp)
+ordicluster(m1, cl, prune=3, col=grp)
+
+# # optimal partitioning
+# require(optpart)
+```
+
+
+
+## Group differences
+
+#### *Do community compositions significantly differ among groups?*
+
+```{r grp-differences, exercise=TRUE}
+
+# define four groups, based on equal number of observations
+(p <- quantile(env$k, probs = seq(0, 1, by=0.25))) # quantiles
+env$grp <- cut(env$k, p)                   # group memberships
+table(env$grp)                             # count per group
+tapply(env$k, INDEX = env$grp, FUN = mean) # group means
+
+# permanova: test for differences in multivariate *centroid*
+a1 <- adonis(D ~ env$grp, permu=999)
+print(a1)
+
+# permdisp: test for differences in multivariate *dispersion*
+b1 <- betadisper(D, env$grp)
+permutest(b1, pairwise=TRUE, permu=999)
+
+# plot multivariate centroids per group, on the NMS configuration
+centr <- aggregate(scores(m1),
+                   by=list(k_group=env$grp),
+                   mean)[-1]
+plot(m1$points, pch=16, col=env$grp)
+points(centr[1,], pch='+', col=1, cex=3)
+points(centr[2,], pch='+', col=2, cex=3)
+points(centr[3,], pch='+', col=3, cex=3)
+points(centr[4,], pch='+', col=4, cex=3)
+
+# permanova works as 'regular' ANOVA when using Euclidean distances...
+# assume we're interested in species richness differences per group:
+env$richness <- specnumber(spe) 
+De <- vegdist(env$richness, 'euc')
+adonis(De ~ env$grp, perm=999) # examine F and SS
+anova(lm(x$SppRich ~ env$grp)) # expect identical F and SS
+
+# blocked design: permutations must occur within strata
+blk <- factor(sample(rep(1:12,len=nrow(x)))) # make arbitrary 'blocks'
+plot(scores(m1), pch=16, col=colvec(x$SppRich))
+ordiellipse(m1, blk, label=TRUE)
+customperm <- how(nperm=999)
+setBlocks(customperm) <- blk
+adonis(D ~ env$grp, permutations=customperm)
+```
+
+
+
+## Group indicator species
+
+#### *Which species are indicative of pre-defined groups?*
+
+The Indicator Value (_IndVal_) is the product of a species' fidelity and specificity to a group.  See:  
+
+Dufrêne, M. and Legendre, P. 1997. Species assemblages and indicator species: the need for a flexible asymmetrical approach. _Ecological Monographs_ 67(3): 345--366.  
+
+As well as R package `indicspecies` which tests whether species might indicate _multiple_ groups.
+
+```{r indval, exercise=TRUE}
+grp <- cut(env$clay, 5)                    # define groups by real data
+rnd <- sample(grp, length(grp), replace=T) # define random groups by bootstrapping
+iv  <- labdsv::indval(spe, grp) # indicator species analysis
+ivr <- labdsv::indval(spe, rnd) # indicator species analysis for *random* groups
+summary(iv)                     # IndVal observed
+summary(ivr)                    # IndVal expected at random
+p.adjust(iv$pval,'holm')        # correction for multiple testing
+
+```
+
+
+
+## Traits analysis
+
+#### *How do traits relate to environment?*
+
+
+#### *Are traits (of species within a site) convergent or divergent?*
+
+```{r trait-converge, exercise=TRUE}
+# Euclidean trait distance (traits already scaled 0-1)
+Dt <- as.matrix(dist(tra, method='euc'))
+# calculate trait standardized effect size of mean pairwise distances in sites
+ses <- picante::ses.mpd(spe, Dt, null.model = 'richness', abund=F, runs=999)
+# does trait ses.mpd differ between habitats?
+grp_clay <- cut(env$clay, 5)
+par(mfrow=c(1,2))
+plot(ses$mpd.obs.z ~ env$clay, xlab='Clay fraction', ylab='Trait SES(MPD)', 
+     col=ifelse(ses$mpd.obs.p < 0.05, 'red', 'black'))
+abline(h=0, lty=2)
+text(0.2, 1, 'Divergent')
+text(0.2, -4, 'Convergent')
+plot(ses$mpd.obs.z ~ grp_clay, xlab='Clay group', ylab='Trait SES(MPD)')
+abline(h=0, lty=2)
+anova(lm(ses$mpd.obs.z ~ grp_clay))
+text(1.4, 1, 'Divergent')
+text(1.4, -4, 'Convergent')
+
+```
+
+
+### Make a community-weighted means matrix
+
+The result is a traits-by-site matrix.
+
+```{r cwm, exercise=TRUE}
+`makecwm` <- function (spe, tra) {
+     spe <- as.matrix(spe)
+     tra <- as.matrix(tra)
+     `standardize` <- function(x) {
+          (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
+     }
+     tra <- apply(tra, MARGIN = 2, FUN = standardize)
+     awt <- spe %*% tra             # abundance-weighted trait totals
+     awt / rowSums(spe, na.rm=TRUE) # community-weighted traits matrix
+}
+```
+
+
+
+
+## Phylogenies
+
+#### *How do species' evolutionary relationships explain responses?*
+
+### Plot phylogenies
+
+### Phylogenetic signal
+
+```{r phylo-signal, exercise=TRUE, exercise.setup = 'ordination'}
+### detect phylogenetic signal for traits
+K <- sapply(tra, FUN=function(j){
+     names(j) <- rownames(tra)
+     round(picante::phylosignal(j, ape::multi2di(phy)),6)})
+as.matrix(K) # Blomberg's K statistic for continuous traits
+```
+
+### Community phylogenetic diversity
+
+
+
+
+
+
+
+
+
+
+## Further resources
+
+#### General R usage
+
+[R for Data Science](https://r4ds.had.co.nz/)  
+
+[Data Carpentry](https://datacarpentry.org/R-ecology-lesson/index.html)  
+
+#### Ecology in R
+
+[Dave Roberts' labdsv pages](http://ecology.msu.montana.edu/labdsv/R/)  
+
+[Jari Oksanen's vegan introduction - PDF](https://cran.r-project.org/web/packages/vegan/vignettes/intro-vegan.pdf)  
+
+[David Zelený's community analysis](http://www.davidzeleny.net/anadat-r/doku.php?id=en:start)  
+
+[Tad Fukami's ecological statistics](https://fukamilab.github.io/BIO202/)  
+
+[Steve Kembel traits and phylogenies tutorial](http://www.kembellab.ca/r-workshop/biodivR/SK_Biodiversity_R.html)
+
+#### Community analysis R packages
+
+[CRAN Environmetrics Task View](https://cran.r-project.org/web/views/Environmetrics.html)  
+vegan  
+labdsv  
+optpart  
+ade4  
+ecodist
+
+
+## FAQ decision tree
+
+[Why are we here today?](#why-here)
+
+
+
+
+
+
+
+
+
+
+
+
+## Topic 1
+
+### Exercise with Hint
+
+*Here's an exercise where the chunk is pre-evaulated via the `exercise.eval` option (so the user can see the default output we'd like them to customize). We also add a "hint" to the correct solution via the chunk immediate below labeled `print-limit-hint`.*
+
+Modify the following code to limit the number of rows printed to 5:
+
+```{r print-limit, exercise=TRUE, exercise.eval=TRUE}
+mtcars
+```
+
+```{r print-limit-hint}
+head(mtcars)
+```
+
+### Quiz
+
+*You can include any number of single or multiple choice questions as a quiz. Use the `question` function to define a question and the `quiz` function for grouping multiple questions together.*
+
+Some questions to verify that you understand the purposes of various base and recommended R packages:
+
+```{r quiz, echo=FALSE}
+quiz(
+  question("Which package contains functions for installing other R packages?",
+    answer("base"),
+    answer("tools"),
+    answer("utils", correct = TRUE),
+    answer("codetools")
+  ),
+  question("Which of the R packages listed below are used to create plots?",
+    answer("lattice", correct = TRUE),
+    answer("tools"),
+    answer("stats"),
+    answer("grid", correct = TRUE)
+  )
+)
+```
+
