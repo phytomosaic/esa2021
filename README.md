@@ -18,7 +18,7 @@ ESA 2021 workshop: community analysis of species, traits, phylogenies, and respo
 
 ### Installation
 
-1. Install R.
+1. Install R from https://cran.r-project.org/.
 2. Download and install the `esa2021` package.
 3. Install the `learnr` package.
 4. Follow instructions below.
