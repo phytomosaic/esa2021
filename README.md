@@ -18,9 +18,9 @@ ESA 2021 workshop: community analysis of species, traits, phylogenies, and respo
 
 ### Installation
 
-1. Install R from https://cran.r-project.org/.
-2. Download and install the `esa2021` package.
-3. Install the `learnr` package.
+1. Download and install R from CRAN: https://cran.r-project.org/.
+2. Download and install the `esa2021` package: `remotes::github_install('phytomosaic/esa2021')`.
+3. Install the `learnr` package: `install.packages('learnr')`.
 4. Follow instructions below.
 
 
@@ -33,6 +33,8 @@ require('esa2021')
 require('learnr')
 learnr::run_tutorial('esa_tutorial', package = 'esa2021')
 ```
+
+This creates a local instance of the interactive tutorial.  The tutorial is a combination of text describing ecological concepts, along with embedded code chunks that let you run live R commands.
 
 ### Contributors
 
