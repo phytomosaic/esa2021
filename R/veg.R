@@ -11,17 +11,19 @@
 #'   traits for 56 plant species,\cr - \code{phy} phylogeny for 56 plant
 #'   species.
 #'
-#' @details ### Study area description
+#' @details
+#'
+#' ### Study area description
 #'
 #' The Mafragh plain is in El Tarf Province of far northeast Algeria
 #' (36.84704$^{\circ}$, 7.945$^{\circ}$).  According to documentation in R
 #' package `ade4`:
 #'
-#' > This marshy coastal plain is a geomorphological feature, east of Port of
+#' "This marshy coastal plain is a geomorphological feature, east of Port of
 #' Annaba, limited to the north by the Mediterranean Sea and a dune cordon, to
 #' the south by clay-sandstone Numidian massifs, to the west by a wadi and to
 #' East by an irrigated perimeter. It covers 15,000 ha of which 10,000 form the
-#' area of study.
+#' area of study."
 #'
 #' Potential human pressures include grazing, irrigation and salination,
 #' plowing, and housing development.  Its Köppen climate type is "Csa:
