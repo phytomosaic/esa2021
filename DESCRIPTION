@@ -1,0 +1,15 @@
+Package: esa2021
+Title: ESA 2021 Workshop on Community Analysis in R
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Robert",
+           family = "Smith",
+           role = c("aut", "cre"),
+           email = "robertsmith3@usda.gov",
+           comment = c(ORCID = "0000-0001-5085-634X"))
+Description: ESA 2021 workshop: community analysis of species, traits, phylogenies, and responses to environment.
+License: GPL (>= 3) + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
