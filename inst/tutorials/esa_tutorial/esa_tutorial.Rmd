@@ -33,11 +33,6 @@ require(optpart)
 require(ape)
 require(picante)
 require(mgcv)
-require(viridis)
-cv <- viridis::viridis(n=99, alpha=0.9, begin=0.2, end=0.9)
-`colvec` <- function(x) {
-     return(cv[cut(x, breaks=length(cv), include.lowest=TRUE)])
-}
 load('veg.rda')  # assumed to be in your working dir
 xy  <- veg$xy    # spatial
 spe <- veg$spe   # species
@@ -49,7 +44,7 @@ spe <- data.frame(log10(spe + 1))
 env <- data.frame(decostand(scale(env, center=F), 'range'))
 tra <- data.frame(decostand(tra, 'range'))
 d   <- vegdist(spe, method='bray', binary=T)
-D   <- stepacross(d, 'shortest', toolong = 1)
+D   <- stepacross(d, 'shortest', toolong=1, trace=F)
 m1  <- metaMDS(D, k=2, try=200, trymax=500, trace=0)  # NMS
 m2  <- cmdscale(D, k=2, add=T)               # PCoA
 m3  <- prcomp(spe)                           # PCA
@@ -60,21 +55,21 @@ m3  <- prcomp(spe)                           # PCA
 
 #### *Why are we here today?* {#why-here}
 
-This course demonstrates **the practice of ecological community analysis in R**.  We borrow and apply concepts from ecology, statistics and computer science, but do not get too bogged down in theoretical details.  This short course aims to be an [axe handle](https://www.poetryfoundation.org/poems/57150/axe-handles){target="_blank"} --- carve and shape it to your own practice.
+This course demonstrates **the practice of ecological community analysis in R**. Our goal is to link biological reality with corresponding conceptual and mathematical models.  We borrow and apply concepts from ecology, statistics and computer science, but do not get too bogged down in theoretical details.  This short course aims to be an [axe handle](https://www.poetryfoundation.org/poems/57150/axe-handles){target="_blank"} --- carve and shape it to your own practice.
 
-### Worldview
+### Learning outcomes
+List here.
 
-Biological reality $\Longleftrightarrow$ Conceptual model  $\Longleftrightarrow$   Mathematical model  
+### Assumptions
 
-### Why community analysis?
+We assume you have a basic familiarity with R.  If not, please go [here]().  At the least, you should be able to assign an object, distinguish between different objects (vector, matrix, data.frame, etc.), and index rows/columns of a matrix or data.frame.
 
-Redundancy.  Better gradient coverage.  No need to track rare/hard-to-detect taxa.  Insight into possible *mechanisms* via traits and phylogenetic relationships.
+<!-- ### Why community analysis? -->
+<!-- Redundancy.  Better gradient coverage.  No need to track rare/hard-to-detect taxa.  Insight into possible *mechanisms* via traits and phylogenetic relationships. -->
 
+### Setup
 
-
-## Setup
-
-#### *How do I use the software?*
+#### *How do I use the software?* {#how-setup}
 
 ### Installation
 
