@@ -1,6 +1,5 @@
 ---
 title: "ESA 2021"
-# author: "Rob Smith"
 output:
   learnr::tutorial:
     css: css/custom.css
@@ -51,9 +50,13 @@ m3  <- prcomp(spe)                           # PCA
 ### HIDDEN ###
 ```
 
+
+<!-- --------------------------------------------- -->
+
+
 ## Overview
 
-#### *Why are we here today?* {#why-here}
+#### __*Why are we here today?*__ {#why-here}
 
 This course demonstrates **the practice of ecological community analysis in R**. Our goal is to link biological reality with corresponding conceptual and mathematical models.  We borrow and apply concepts from ecology, statistics and computer science, but do not get too bogged down in theoretical details.  This short course aims to be an [axe handle](https://www.poetryfoundation.org/poems/57150/axe-handles){target="_blank"} --- carve and shape it to your own practice.
 
@@ -64,18 +67,11 @@ List here.
 
 We assume you have a basic familiarity with R.  If not, please go [here]().  At the least, you should be able to assign an object, distinguish between different objects (vector, matrix, data.frame, etc.), and index rows/columns of a matrix or data.frame.
 
-<!-- ### Why community analysis? -->
-<!-- Redundancy.  Better gradient coverage.  No need to track rare/hard-to-detect taxa.  Insight into possible *mechanisms* via traits and phylogenetic relationships. -->
+### Software installation
 
-### Setup
+Packages contain supplemental functions you will need.  They are supplemental beyond "base" R.  Ordinarily you would open R and install required packages as follows (but these dependencies should have automatically installed when you first installed this tutorial). 
 
-#### *How do I use the software?* {#how-setup}
-
-### Installation
-
-Open R and install required packages as follows.  Packages contain supplemental functions you will need.  
-
-```{r installation, exercise=FALSE, eval=FALSE}
+```{r install-pkgs, exercise=FALSE, eval=FALSE}
 install.packages('vegan')   # community ecology
 install.packages('labdsv')  # community ecology
 install.packages('ade4')    # community ecology
@@ -83,12 +79,11 @@ install.packages('optpart') # clustering
 install.packages('ape')     # phylogenetics
 install.packages('picante') # phylogenetics
 install.packages('mgcv')    # nonlinear regression
-install.packages('viridis') # color palettes
 ```
 
 ### Load packages
 
-To use functions provided by packages, load them into your R environment.
+To use functions provided by packages, load them into your R environment.  Again, this has already been done for you in the tutorial.
 
 ```{r load-pkgs, exercise=FALSE, eval=FALSE}
 require(vegan)
@@ -98,73 +93,54 @@ require(optpart)
 require(ape)
 require(picante)
 require(mgcv)
-require(viridis)
-# remotes::install_github('phytomosaic/ecole')
 ```
 
-### Define custom functions
+### Useful functions to explore
 
-In R, you can define your own functions of the generic form `f <- function(x) { x }`.  For example, let's define a few useful convenience functions here.
+Base R already contains lots of useful functions.  Use a few basic functions to explore a dataset called `spe`.
 
-```{r convenience, exercise=FALSE, eval=FALSE}
-# object: a default color vector
-cv <- viridis::viridis(n=99, alpha=0.9, begin=0.2, end=0.9)
+```{r useful-functions, exercise=TRUE}
+?ls           # for help, put ? in front of any function
+ls()          # list items in environment
+dim(spe)      # dimensions of an object
+NROW(spe)
+NCOL(spe)
+str(spe)
+head(spe)
+names(spe)
+x <- spe[,11]
+x <- spe[,'bolboschoenus_maritimus']
+hist(x)
+plot(x)
+rm(x)
+```
 
-# function: maps a numeric-valued vector to colors
-`colvec` <- function(x) {
-     return(cv[cut(x, breaks=length(cv), include.lowest=TRUE)])
+### Define objects and functions
+
+We've already said that you can use functions from other packages.  But you can also "roll your own"!  Functions take the generic form `f <- function(x) { x }`.  For example:
+
+```{r define-functions, exercise=TRUE}
+# function (a silly one): pick a color from the vector by position
+`item_picker` <- function(x, pos = NULL) {
+  x[pos]
 }
+z <- 1:19               # assign a sequence of numbers to object `z`
+item_picker(z, pos = 5) # pick the fifth element of `z`
 ```
 
+## Data
 
-
-## Data background
-
-#### *Where did this dataset originate, and what does it mean?*
+#### __*Where did this dataset originate? How do I use it?*__ {#data-origin}
 
 ### Mafragh, Algeria vegetation data
 
-The `veg` dataset gives information about spatial coordinates, species, environment, traits, and phylogeny for plants on a coastal plain in North Africa.  Specifically, `veg` is a list containing:
+We will use one core dataset throughout this tutorial. The `veg` dataset gives information about spatial coordinates, species, environment, traits, and phylogeny for plants on the Mafragh coastal plain in North Africa.  Specifically, `veg` is a list containing five items:
 
-* `xy`  \tab 97 observations of 2 spatial coordinates
-* `spe` \tab 97 observations of 56 plant species
-* `env` \tab 347 observations of 11 soil enviro variables
-* `tra` \tab 12 traits for 56 plant species
-* `phy` \tab phylogeny for 56 plant species
-
-### Study area description
-
-The Mafragh plain is in El Tarf Province of far northeast Algeria (36.84704$^{\circ}$, 7.945$^{\circ}$).  According to documentation in R package `ade4`:
-
-> This marshy coastal plain is a geomorphological feature, east of Port of Annaba, limited to the north by the Mediterranean Sea and a dune cordon, to the south by clay-sandstone Numidian massifs, to the west by a wadi and to East by an irrigated perimeter. It covers 15,000 ha of which 10,000 form the area of study.
-
-Potential human pressures include grazing, irrigation and salination, plowing, and housing development.  Its Köppen climate type is "Csa: Hot-summer Mediterranean climate".
-
-### History of the Mafragh dataset
-
-The data originate from the field studies of Prof. Gérard de Bélair of Annaba in northeast Algeria.  Born in France, de Bélair became a missionary priest in 1969 shortly after Algeria's independence, then an agronomist during the Agrarian Revolution, then a botanist, then professor, then conservationist (according to his [lay](http://gdebelair.com/itineraire.html) and [clergy](https://www.visages-diocese-autun.fr/visage/de-belair-gerard/) accounts).  As of 2021, he continues to actively publish on the vegetation of northern Algeria.  
-
-We should recognize colonialist legacies that brought us here.  France controlled Algeria from 1830 until its independence in 1962.  Prior to that, Algeria was occupied by Ottoman Turks, Spaniards, Arab Muslims, Berber/Amazigh, Romans, Phoenicians, and prehistoric occupants dating to at least 1.8 million years ago.  We may speculate that the region's vegetation and cultural histories have been closely intertwined.  
-
-The data were included in early versions of the `ade4` software (Dray and Dufour 2007) which itself has its roots at Université Lyon 1, France.  The present data are lightly modified from Appendix S4 of Pavoine et al. (2011), who also added a phylogeny.
-
-### References
-
-de Bélair, G. 1981. Biogéographie et aménagement de la Plaine de la Mafragh (Annaba - Algérie) [Biogeography and development of the Mafragh Plain (Annaba, Algeria)]. Dissertation, Université Paul Valéry, Montpellier. http://www.sudoc.fr/00871262X  
-
-de Bélair, G. 1990. Structure, fonctionnement et perspectives de gestion de quatre écocomplexes lacustres et marécageux (El Kala, Est-Algérien) [Structure, function and management perspectives of four lake and marsh eco-complexes (El Kala, East Algeria)]. Dissertation, Université des sciences et techniques de Montpellier 2. http://www.sudoc.fr/007729197  
-
-de Bélair, G. and M. Bencheikh-Lehocine. 1987. Composition et déterminisme de la végétation d'une plaine côtière marécageuse: La Mafragh (Annaba, Algérie) [Composition and determinism of the vegetation of a marshy coastal plain: La Mafragh (Annaba, Algeria)]. Bulletin d'Ecologie, 18(4): 393–407.  
-
-Dray, S. and A. Dufour. 2007. The `ade4` package: implementing the duality diagram for ecologists. Journal of Statistical Software 22(4): 1-20. [doi:10.18637/jss.v022.i04](https://doi.org/10.18637/jss.v022.i04)  
-
-Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linking patterns in phylogeny, traits, abiotic variables and space: a novel approach to linking environmental filtering and plant community assembly. Journal of Ecology 99: 165–175. [doi:10.1111/j.1365-2745.2010.01743.x](https://doi.org/10.1111/j.1365-2745.2010.01743.x)  
-
-
-
-## Data load
-
-#### *How do I get my data into the software?*
+* `xy` 97 observations of 2 spatial coordinates
+* `spe` 97 observations of 56 plant species
+* `env` 97 observations of 11 soil environmental variables
+* `tra` 12 traits for 56 plant species
+* `phy` phylogeny for 56 plant species
 
 ### Load data
 
@@ -181,23 +157,36 @@ rm(veg)          # cleanup
 ls()             # objects now in this environment
 ```
 
-### Useful functions to explore
+### Study area description
 
-```{r useful-functions, exercise=TRUE}
-?ls
-ls()          # list items in environment
-dim(spe)      # dimensions of an object
-NROW(spe)
-NCOL(spe)
-str(spe)
-head(spe)
-names(spe)
-x <- spe[,11]
-x <- spe[,'bolboschoenus_maritimus']
-hist(x)
-plot(x)
-rm(x)
-```
+The Mafragh plain is in El Tarf Province of far northeast Algeria (36.84704$^{\circ}$, 7.945$^{\circ}$).  According to documentation in R package `ade4`:
+
+> This marshy coastal plain is a geomorphological feature, east of Port of Annaba, limited to the north by the Mediterranean Sea and a dune cordon, to the south by clay-sandstone Numidian massifs, to the west by a wadi and to East by an irrigated perimeter. It covers 15,000 ha of which 10,000 form the area of study.
+
+Potential human pressures include grazing, irrigation and salination, plowing, and housing development.  Its Köppen climate type is "Csa: Hot-summer Mediterranean climate".
+
+### History of the Mafragh dataset
+
+The data originate from the field studies of Prof. Gérard de Bélair of Annaba in northeast Algeria.  Born in France, de Bélair became a missionary priest in 1969 shortly after Algeria's independence, then an agronomist during the Agrarian Revolution, then a botanist, then professor, then conservationist (according to his [lay](http://gdebelair.com/itineraire.html) and [clergy](https://www.visages-diocese-autun.fr/visage/de-belair-gerard/) accounts).  As of 2021, he continues to actively publish on the vegetation of northern Algeria.  
+
+We should recognize the colonialist legacies that brought us here.  France controlled Algeria from 1830 until its independence in 1962.  Prior to that, Algeria was occupied by Ottoman Turks, Spaniards, Arab Muslims, Berber/Amazigh, Romans, Phoenicians, and prehistoric occupants dating to at least 1.8 million years ago.  We may speculate that the region's vegetation and cultural histories have been closely intertwined.  
+
+The data were included in early versions of the `ade4` software (Dray and Dufour 2007) which itself has its roots at Université Lyon 1, France.  The present data are lightly modified from Appendix S4 of Pavoine et al. (2011), who also added a phylogeny.
+
+### References
+
+de Bélair, G. 1981. Biogéographie et aménagement de la Plaine de la Mafragh (Annaba - Algérie) [Biogeography and development of the Mafragh Plain (Annaba, Algeria)]. Dissertation, Université Paul Valéry, Montpellier. http://www.sudoc.fr/00871262X  
+
+de Bélair, G. 1990. Structure, fonctionnement et perspectives de gestion de quatre écocomplexes lacustres et marécageux (El Kala, Est-Algérien) [Structure, function and management perspectives of four lake and marsh eco-complexes (El Kala, East Algeria)]. Dissertation, Université des sciences et techniques de Montpellier 2. http://www.sudoc.fr/007729197  
+
+de Bélair, G. and M. Bencheikh-Lehocine. 1987. Composition et déterminisme de la végétation d'une plaine côtière marécageuse: La Mafragh (Annaba, Algérie) [Composition and determinism of the vegetation of a marshy coastal plain: La Mafragh (Annaba, Algeria)]. Bulletin d'Ecologie, 18(4): 393–407.  
+
+Dray, S. and A. Dufour. 2007. The `ade4` package: implementing the duality diagram for ecologists. Journal of Statistical Software 22(4): 1-20. [doi:10.18637/jss.v022.i04](https://doi.org/10.18637/jss.v022.i04)  
+
+Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linking patterns in phylogeny, traits, abiotic variables and space: a novel approach to linking environmental filtering and plant community assembly. Journal of Ecology 99: 165–175. [doi:10.1111/j.1365-2745.2010.01743.x](https://doi.org/10.1111/j.1365-2745.2010.01743.x)  
+
+
+<!-- --------------------------------------------- -->
 
 
 ## Pre-analysis
@@ -250,8 +239,8 @@ rm(veg)          # cleanup
 ```{r transformations, exercise=TRUE, exercise.setup='transformations-setup'}
 ### basic transformations
 spe <- data.frame(log10(spe + 1))
-env <- data.frame(decostand(scale(env, center=F), 'range'))
-tra <- data.frame(decostand(tra, 'range'))
+env <- data.frame(vegan::decostand(scale(env, center=F), 'range'))
+tra <- data.frame(vegan::decostand(tra, 'range'))
 
 head(env)
 head(tra)
@@ -268,25 +257,42 @@ rm(s)
 
 ### Visualize data
 
+First, define a vector of colors to use.
+
+```{r viz-color, exercise=TRUE}
+# spatial
+u <- get_palette()
+```
+
+Let's map the spatial coordinates.
+
 ```{r viz-xy, exercise=TRUE}
 # spatial
 plot(xy, pch=19, col='#00000050', xlab='Eastness', ylab='Northness')
 ```
 
+Plot the species abundance matrix as a heatmap.
+
 ```{r viz-spe, exercise=TRUE}
 # species
-vegan::tabasco(spe, col=cv)
+vegan::tabasco(spe, col=u)
 ```
+
+Plot the soils (environmental) matrix as a heatmap.
 
 ```{r viz-env, exercise=TRUE}
 # environment
-vegan::tabasco(env, col=cv)
+vegan::tabasco(env, col=u)
 ```
+
+Plot the traits matrix as a heatmap.
 
 ```{r viz-tra, exercise=TRUE}
 # traits
-vegan::tabasco(tra, col=cv)
+vegan::tabasco(tra, col=u)
 ```
+
+Plot the phylogenetic tree.
 
 ```{r viz-phy, exercise=TRUE}
 # phylogeny
@@ -294,6 +300,7 @@ plot(phy, cex=0.6, no.margin=TRUE)
 ```
 
 
+<!-- --------------------------------------------- -->
 
 
 ## Diversity measures
@@ -344,17 +351,17 @@ propnoshare
 plot(vegan::specaccum(spe), ylab='Species')
 ```
 
-
-
 ### Trait diversity
 
-
-
+Here.
 
 
 ### Phylogenetic diversity
 
 Here.
+
+
+<!-- --------------------------------------------- -->
 
 
 ## Direct gradient analysis
@@ -384,6 +391,8 @@ lines(xs, predict(mod_nonlinear, data.frame(x = xs)), lwd = 2, col='orange')
 rm(y, x, xs, mod_linear, mod_nonlinear)
 ```
 
+
+<!-- --------------------------------------------- -->
 
 
 ## Dissimilarities
@@ -416,6 +425,8 @@ best
 ```
 
 
+<!-- --------------------------------------------- -->
+
 
 ## Ordination (unconstrained)
 
@@ -434,7 +445,8 @@ Plotting the ordinations.
 
 ```{r ordination-plotting-01, exercise=TRUE}
 # color vector for plotting
-u <- viridis::viridis(nrow(spe), begin=0.2, end=0.9, alpha=0.9)
+u <- get_palette()
+u <- u[1:nrow(spe)]
 
 # compare three kinds of ordination
 par(mfrow=c(1,3), bty='l', las=1)
@@ -485,24 +497,26 @@ Dimensionality selection.
 ```{r dimensionality-selection, exercise=TRUE}
 # define screeplot function, running NMS for varying dimensions
 `scree_nms` <- function(kk = 5, ...) {
-     stress <- rep(NA, kk)
-     for (i in 1:kk) {
-          cat('calculating', i, 'of', kk, 'dimensions...\n')
-          m <- metaMDS(D, k=i, try=200, trymax=500, trace=0)
-          stress[i] <- m$stress
-     }
-     plot(1:kk, stress, main='', xlab='Dimension', ylab='Stress',
-          ylim=c(0, max(stress)*1.05), pch=16, las=1, bty='l')
-     lines(1:kk, stress)
-     abline(0.20, 0, col='red', lty = 2)
-     abline(0.15, 0, col='gold', lty = 2)
-     abline(0.10, 0, col='green', lty = 2)
-     data.matrix(stress)
+  stress <- rep(NA, kk)
+  for (i in 1:kk) {
+    cat('calculating', i, 'of', kk, 'dimensions...\n')
+    m <- metaMDS(D, k=i, try=200, trymax=500, trace=0)
+    stress[i] <- m$stress
+  }
+  plot(1:kk, stress, main='', xlab='Dimension', ylab='Stress',
+       ylim=c(0, max(stress)*1.05), pch=16, las=1, bty='l')
+  lines(1:kk, stress)
+  abline(0.20, 0, col='red', lty = 2)
+  abline(0.15, 0, col='gold', lty = 2)
+  abline(0.10, 0, col='green', lty = 2)
+  data.matrix(stress)
 }
 scree <- scree_nms(kk = 5)  # 2 dimensions seems ok...
 scree
 ```
 
+
+<!-- --------------------------------------------- -->
 
 
 ## Ordination (constrained)
@@ -512,9 +526,9 @@ scree
 ```{r ord-constrained, exercise=TRUE}
 # dbRDA: distance-based RDA
 m1 <- dbrda(D ~ k + sand + conductivity, 
-           data = env, 
-           comm = spe, 
-           add = 'lingoes')
+            data = env, 
+            comm = spe, 
+            add = 'lingoes')
 
 # RDA: redundancy analysis
 m2 <- rda(spe ~ k + sand + conductivity, data=env)
@@ -538,6 +552,7 @@ points(m3, pch=16, col=colvec(env$k))
 ```
 
 
+<!-- --------------------------------------------- -->
 
 
 ## Group clustering
@@ -560,6 +575,8 @@ ordicluster(m1, cl, prune=3, col=grp)
 # require(optpart)
 ```
 
+
+<!-- --------------------------------------------- -->
 
 
 ## Group differences
@@ -609,6 +626,8 @@ adonis(D ~ env$grp, permutations=customperm)
 ```
 
 
+<!-- --------------------------------------------- -->
+
 
 ## Group indicator species
 
@@ -631,6 +650,8 @@ p.adjust(iv$pval,'holm')        # correction for multiple testing
 
 ```
 
+
+<!-- --------------------------------------------- -->
 
 
 ## Traits analysis
@@ -661,25 +682,25 @@ text(1.4, -4, 'Convergent')
 
 ```
 
-
 ### Make a community-weighted means matrix
 
 The result is a traits-by-site matrix.
 
 ```{r cwm, exercise=TRUE}
 `makecwm` <- function (spe, tra) {
-     spe <- as.matrix(spe)
-     tra <- as.matrix(tra)
-     `standardize` <- function(x) {
-          (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
-     }
-     tra <- apply(tra, MARGIN = 2, FUN = standardize)
-     awt <- spe %*% tra             # abundance-weighted trait totals
-     awt / rowSums(spe, na.rm=TRUE) # community-weighted traits matrix
+  spe <- as.matrix(spe)
+  tra <- as.matrix(tra)
+  `standardize` <- function(x) {
+    (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
+  }
+  tra <- apply(tra, MARGIN = 2, FUN = standardize)
+  awt <- spe %*% tra             # abundance-weighted trait totals
+  awt / rowSums(spe, na.rm=TRUE) # community-weighted traits matrix
 }
 ```
 
 
+<!-- --------------------------------------------- -->
 
 
 ## Phylogenies
@@ -693,20 +714,15 @@ The result is a traits-by-site matrix.
 ```{r phylo-signal, exercise=TRUE, exercise.setup = 'ordination'}
 ### detect phylogenetic signal for traits
 K <- sapply(tra, FUN=function(j){
-     names(j) <- rownames(tra)
-     round(picante::phylosignal(j, ape::multi2di(phy)),6)})
+  names(j) <- rownames(tra)
+  round(picante::phylosignal(j, ape::multi2di(phy)),6)})
 as.matrix(K) # Blomberg's K statistic for continuous traits
 ```
 
 ### Community phylogenetic diversity
 
 
-
-
-
-
-
-
+<!-- --------------------------------------------- -->
 
 
 ## Further resources
@@ -732,64 +748,17 @@ as.matrix(K) # Blomberg's K statistic for continuous traits
 #### Community analysis R packages
 
 [CRAN Environmetrics Task View](https://cran.r-project.org/web/views/Environmetrics.html)  
-vegan  
-labdsv  
-optpart  
-ade4  
-ecodist
+[vegan](https://cran.r-project.org/web/packages/vegan/index.html)  
+[labdsv](https://cran.r-project.org/web/packages/labdsv/index.html)  
+[optpart](https://cran.r-project.org/web/packages/optpart/index.html)  
+[ade4](https://cran.r-project.org/web/packages/ade4/index.html)  
+[ecodist](https://cran.r-project.org/web/packages/ecodist/index.html)  
 
 
-## FAQ decision tree
+<!-- --------------------------------------------- -->
+
+
+## FAQ
 
 [Why are we here today?](#why-here)
-
-
-
-
-
-
-
-
-
-
-
-
-## Topic 1
-
-### Exercise with Hint
-
-*Here's an exercise where the chunk is pre-evaulated via the `exercise.eval` option (so the user can see the default output we'd like them to customize). We also add a "hint" to the correct solution via the chunk immediate below labeled `print-limit-hint`.*
-
-Modify the following code to limit the number of rows printed to 5:
-
-```{r print-limit, exercise=TRUE, exercise.eval=TRUE}
-mtcars
-```
-
-```{r print-limit-hint}
-head(mtcars)
-```
-
-### Quiz
-
-*You can include any number of single or multiple choice questions as a quiz. Use the `question` function to define a question and the `quiz` function for grouping multiple questions together.*
-
-Some questions to verify that you understand the purposes of various base and recommended R packages:
-
-```{r quiz, echo=FALSE}
-quiz(
-  question("Which package contains functions for installing other R packages?",
-    answer("base"),
-    answer("tools"),
-    answer("utils", correct = TRUE),
-    answer("codetools")
-  ),
-  question("Which of the R packages listed below are used to create plots?",
-    answer("lattice", correct = TRUE),
-    answer("tools"),
-    answer("stats"),
-    answer("grid", correct = TRUE)
-  )
-)
-```
-
+[Where did this dataset originate? How do I use it?](#data-origin)
