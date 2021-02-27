@@ -6,23 +6,24 @@
 #' @param x Vector of values to evaluate.
 #'
 #' @return
-#' Vector of color values, of same length as \code{x}.
+#' \code{get_palette} returns a vector of 99 hex color values. \code{colvec}
+#'     returns a hex color vector of same length as \code{x}, corresponding to
+#'     values of \code{x}.
 #'
 #' @examples
 #' # generate data
-#' x <- seq(-1.95, 1.95, length = 30)
-#' y <- seq(-1.95, 1.95, length = 35)
+#' x <- y <- seq(-3, 3, length = 30)
 #'
 #' # color points by numeric values
-#' plot(x, y[1:30], col=colvec(x), pch=16)
+#' plot(x, y, col=colvec(x), pch=16)
 #'
 #' # color points by factor values
 #' trmt <- gl(3, 10, labels = c('Q', 'R', 'S'))
-#' plot(x, y[1:30], col=colvec(rev(trmt)), pch=16)
+#' plot(x, y, col=colvec(rev(trmt)), pch=16)
 #'
 #' @export
 #' @rdname utils_color
-`colvec` <- function(x) {
+`get_palette` <- function() {
   pal <- c('#414487E6','#404688E6','#3F4889E6','#3E4989E6','#3E4C8AE6',
            '#3D4E8AE6','#3C508BE6','#3B528BE6','#3A548CE6','#39558CE6',
            '#38588CE6','#375A8CE6','#365C8DE6','#355E8DE6','#35608DE6',
@@ -43,5 +44,15 @@
            '#7FD34EE6','#83D44CE6','#87D549E6','#8CD646E6','#90D743E6',
            '#95D840E6','#9AD93CE6','#9FDA3AE6','#A3DA37E6','#A8DB34E6',
            '#ADDC30E6','#B2DD2DE6','#B7DE2AE6','#BBDF27E6')
+  return(pal)
+}
+#' @export
+#' @rdname utils_color
+`colvec` <- function(x) {
+  pal <- get_palette()
   return(pal[cut(as.numeric(x), breaks=length(pal), include.lowest=TRUE)])
 }
+
+
+
+
