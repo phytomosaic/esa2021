@@ -28,7 +28,9 @@ learnr::tutorial_options(exercise.timelimit = 10, exercise.eval = FALSE, exercis
 require(vegan)
 require(labdsv)
 require(ade4)
+require(ecodist)
 require(optpart)
+require(vegclust)
 require(ape)
 require(picante)
 require(mgcv)
@@ -47,7 +49,33 @@ D   <- stepacross(d, 'shortest', toolong=1, trace=F)
 m1  <- metaMDS(D, k=2, try=200, trymax=500, trace=0)  # NMS
 m2  <- cmdscale(D, k=2, add=T)               # PCoA
 m3  <- prcomp(spe)                           # PCA
-### HIDDEN ###
+`get_palette` <- function() {
+  pal <- c('#414487E6','#404688E6','#3F4889E6','#3E4989E6','#3E4C8AE6',
+           '#3D4E8AE6','#3C508BE6','#3B528BE6','#3A548CE6','#39558CE6',
+           '#38588CE6','#375A8CE6','#365C8DE6','#355E8DE6','#35608DE6',
+           '#34618DE6','#33638DE6','#32658EE6','#31678EE6','#30698EE6',
+           '#306A8EE6','#2F6C8EE6','#2E6E8EE6','#2D708EE6','#2C718EE6',
+           '#2C738EE6','#2B748EE6','#2A768EE6','#2A788EE6','#297A8EE6',
+           '#287C8EE6','#287D8EE6','#277F8EE6','#26818EE6','#26828EE6',
+           '#25848EE6','#24868EE6','#24878EE6','#23898EE6','#228B8DE6',
+           '#228D8DE6','#218F8DE6','#21908CE6','#20928CE6','#20938CE6',
+           '#1F958BE6','#1F978BE6','#1F998AE6','#1F9A8AE6','#1E9C89E6',
+           '#1F9E89E6','#1FA088E6','#1FA187E6','#20A386E6','#20A486E6',
+           '#21A685E6','#22A884E6','#24AA83E6','#25AC82E6','#26AD81E6',
+           '#28AE80E6','#2AB07FE6','#2DB27DE6','#2FB47CE6','#32B67AE6',
+           '#34B679E6','#37B878E6','#3ABA76E6','#3DBC74E6','#40BD72E6',
+           '#43BF71E6','#47C06FE6','#4AC16DE6','#4EC36BE6','#52C569E6',
+           '#55C668E6','#59C864E6','#5DC863E6','#60CA60E6','#65CB5EE6',
+           '#68CD5BE6','#6DCD59E6','#71CF57E6','#75D054E6','#7AD151E6',
+           '#7FD34EE6','#83D44CE6','#87D549E6','#8CD646E6','#90D743E6',
+           '#95D840E6','#9AD93CE6','#9FDA3AE6','#A3DA37E6','#A8DB34E6',
+           '#ADDC30E6','#B2DD2DE6','#B7DE2AE6','#BBDF27E6')
+  return(pal)
+}
+`colvec` <- function(x) {
+  pal <- get_palette()
+  return(pal[cut(as.numeric(x), breaks=length(pal), include.lowest=TRUE)])
+}
 ```
 
 
@@ -72,13 +100,15 @@ We assume you have a basic familiarity with R.  If not, please go [here]().  At 
 Packages contain supplemental functions you will need.  They are supplemental beyond "base" R.  Ordinarily you would open R and install required packages as follows (but these dependencies should have automatically installed when you first installed this tutorial). 
 
 ```{r install-pkgs, exercise=FALSE, eval=FALSE}
-install.packages('vegan')   # community ecology
-install.packages('labdsv')  # community ecology
-install.packages('ade4')    # community ecology
-install.packages('optpart') # clustering
-install.packages('ape')     # phylogenetics
-install.packages('picante') # phylogenetics
-install.packages('mgcv')    # nonlinear regression
+install.packages('vegan')     # community ecology
+install.packages('labdsv')    # community ecology
+install.packages('ade4')      # community ecology
+install.packages('ecodist')   # community ecology
+install.packages('optpart')   # clustering
+install.packages('vegclust')  # clustering
+install.packages('ape')       # phylogenetics
+install.packages('picante')   # phylogenetics
+install.packages('mgcv')      # nonlinear regression
 ```
 
 ### Load packages
@@ -100,7 +130,7 @@ require(mgcv)
 Base R already contains lots of useful functions.  Use a few basic functions to explore a dataset called `spe`.
 
 ```{r useful-functions, exercise=TRUE}
-?ls           # for help, put ? in front of any function
+### for help, put ? in front of any function, like `?ls()`
 ls()          # list items in environment
 dim(spe)      # dimensions of an object
 NROW(spe)
@@ -120,7 +150,7 @@ rm(x)
 We've already said that you can use functions from other packages.  But you can also "roll your own"!  Functions take the generic form `f <- function(x) { x }`.  For example:
 
 ```{r define-functions, exercise=TRUE}
-# function (a silly one): pick a color from the vector by position
+# function (a silly one): pick an item from the vector by position
 `item_picker` <- function(x, pos = NULL) {
   x[pos]
 }
@@ -130,7 +160,7 @@ item_picker(z, pos = 5) # pick the fifth element of `z`
 
 ## Data
 
-#### __*Where did this dataset originate? How do I use it?*__ {#data-origin}
+#### __*Where did this dataset originate?*__ {#data-origin}
 
 ### Mafragh, Algeria vegetation data
 
@@ -173,7 +203,7 @@ We should recognize the colonialist legacies that brought us here.  France contr
 
 The data were included in early versions of the `ade4` software (Dray and Dufour 2007) which itself has its roots at Université Lyon 1, France.  The present data are lightly modified from Appendix S4 of Pavoine et al. (2011), who also added a phylogeny.
 
-### References
+### Key references
 
 de Bélair, G. 1981. Biogéographie et aménagement de la Plaine de la Mafragh (Annaba - Algérie) [Biogeography and development of the Mafragh Plain (Annaba, Algeria)]. Dissertation, Université Paul Valéry, Montpellier. http://www.sudoc.fr/00871262X  
 
@@ -191,7 +221,7 @@ Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linki
 
 ## Pre-analysis
 
-#### *How do I get my data into shape for analysis?*
+#### __*How do I get my data into shape for analysis?*__
 
 ### Check data structure
 
@@ -255,39 +285,52 @@ range(s)
 rm(s)
 ```
 
+
+### Outliers
+
+Here.
+
+### Test validity of species matrix
+
+```{r mx-valid, exercise=TRUE}
+!anyNA(spe)                     # expect TRUE, no missing values
+all(rowSums(spe, na.rm=T) != 0) # expect TRUE, no empty sites
+all(colSums(spe, na.rm=T) != 0) # expect TRUE, no empty species
+```
+
+
 ### Visualize data
 
-First, define a vector of colors to use.
+First, define a color palette.
 
 ```{r viz-color, exercise=TRUE}
-# spatial
 u <- get_palette()
 ```
 
 Let's map the spatial coordinates.
 
-```{r viz-xy, exercise=TRUE}
+```{r viz-xy, exercise=TRUE, exercise.setup='viz-color'}
 # spatial
 plot(xy, pch=19, col='#00000050', xlab='Eastness', ylab='Northness')
 ```
 
 Plot the species abundance matrix as a heatmap.
 
-```{r viz-spe, exercise=TRUE}
+```{r viz-spe, exercise=TRUE, exercise.setup='viz-color'}
 # species
 vegan::tabasco(spe, col=u)
 ```
 
 Plot the soils (environmental) matrix as a heatmap.
 
-```{r viz-env, exercise=TRUE}
+```{r viz-env, exercise=TRUE, exercise.setup='viz-color'}
 # environment
 vegan::tabasco(env, col=u)
 ```
 
 Plot the traits matrix as a heatmap.
 
-```{r viz-tra, exercise=TRUE}
+```{r viz-tra, exercise=TRUE, exercise.setup='viz-color'}
 # traits
 vegan::tabasco(tra, col=u)
 ```
@@ -298,6 +341,9 @@ Plot the phylogenetic tree.
 # phylogeny
 plot(phy, cex=0.6, no.margin=TRUE)
 ```
+
+
+### Key references
 
 
 <!-- --------------------------------------------- -->
@@ -323,7 +369,7 @@ alpha    # within-site
 avgalpha <- mean(rowSums(spe > 0))
 avgalpha # average within-site
 ```
-```{r div-bet, exercise=TRUE}
+```{r div-bet, exercise=TRUE, exercise.setup = 'div-alf'}
 ### Beta (among-site) diversity (Whittaker's)
 beta <- gamma / avgalpha - 1
 beta
@@ -333,7 +379,7 @@ beta
 propzero <- sum(spe == 0) / prod(dim(spe))
 propzero
 
-### Beta-diversity: dust bunny index
+### Beta-diversity: Dust Bunny Index of McCune and Root (2015)
 dbi <- 1 - mean(as.matrix(vegan::decostand(spe, method = 'max')))
 dbi
 ```
@@ -344,12 +390,6 @@ propnoshare <- sum(z) / length(z)
 propnoshare
 ```
 
-### Hill numbers and rarefaction
-
-```{r div-spaccum, exercise=TRUE}
-### High beta-diversity gives a shallow curve requiring more sites to accumulate species, low beta-diversity gives steep curve that saturates quickly with fewer sites.
-plot(vegan::specaccum(spe), ylab='Species')
-```
 
 ### Trait diversity
 
@@ -361,36 +401,9 @@ Here.
 Here.
 
 
-<!-- --------------------------------------------- -->
+### Key references
 
-
-## Direct gradient analysis
-
-#### *How does this species (or trait, or ...) relate to an environmental gradient?*
-
-```{r direct-gradient-analysis, exercise=TRUE}
-# prepare vector data
-y <- rowSums((spe > 0) * 1)  # response vector = species richness
-x <- env[,'k']               # predictor vector = potassium concentration
-
-# fit two models
-mod_linear    <- stats::lm(y ~ x)                # simple linear model
-mod_nonlinear <- mgcv::gam(y ~ s(x), gamma=0.25) # nonlinear GAM model
-
-# view model summaries
-summary(mod_linear)
-summary(mod_nonlinear)
-
-# visualize fitted values
-plot(x, y, xlab='Potassium', ylab='Richness', pch=16, col='#00000050')
-xs <- seq(min(x), max(x), len = 99)
-lines(xs, predict(mod_linear, data.frame(x = xs)), lwd = 2, col='darkblue')
-lines(xs, predict(mod_nonlinear, data.frame(x = xs)), lwd = 2, col='orange')
-
-# cleanup 
-rm(y, x, xs, mod_linear, mod_nonlinear)
-```
-
+McCune, B., and H.T. Root. 2015. Origin of the dust bunny distribution in ecological community data. _Plant Ecology_ 216(5): 645-656.
 
 <!-- --------------------------------------------- -->
 
@@ -399,8 +412,10 @@ rm(y, x, xs, mod_linear, mod_nonlinear)
 
 #### *How related are community compositions among any two sites?*
 
-### Dissimilarity matrix
-Create a pairwise dissimilarity matrix `D` based on shared and unshared species among sites.
+Dissimilarities among sites help us position sites along gradients, organize them into clusters, or distinguish differences among groups of sites.  
+
+### Dissimilarity matrix for species
+Create a pairwise dissimilarity matrix `d` based on shared and unshared species among sites.  Euclidean distances are seldom useful for species abundance data, here we use the more preferable Bray-Curtis (Sørensen) dissimilarity.
 
 ```{r dissimilarities, exercise=TRUE}
 d <- vegdist(spe, method='bray', binary=T)
@@ -408,21 +423,23 @@ str(d)
 ```
 
 ### Stepacross adjustment
+Sometimes a pair of sites are "maximally dissimilar": they share no species at all, so pairwise dissimilarity is impossible to quantify.  Stepacross adjustment solves this by relating intermediate site(s) that share at least some species in common with the "no-share" sites.
 
 ```{r stepacross, exercise=TRUE}
 D <- stepacross(d, 'shortest', toolong = 1)
-str(D)
 plot(d, D, xlab = 'Original', ylab = 'Stepacross')
 ```
 
-### Best subset of environmental predictors
 
-Which environmental predictors are most related to community compositions?  We can find this by maximizing the rank correlation between environmental distances and community dissimilarities, using the BIOENV procedure.
-
-```{r best-bioenv, exercise=TRUE}
-best <- bioenv(D, env=env[,sapply(env, is.numeric)], upto=3, trace=T)
-best
+### Distance matrix for environment
+Create a pairwise distance matrix `E` based on Euclidean environmental distances among sites.
+```{r dist-env, exercise=TRUE}
+E <- vegdist(env, method='bray', binary=T)
+str(E)
 ```
+
+
+### Key references
 
 
 <!-- --------------------------------------------- -->
@@ -515,6 +532,9 @@ scree <- scree_nms(kk = 5)  # 2 dimensions seems ok...
 scree
 ```
 
+### Key references
+
+Kruskal, J.B. 1964. Multidimensional scaling by optimizing goodness-of-fit to a nonmetric hypothesis. _Psychometrika_ 29: 1-28.
 
 <!-- --------------------------------------------- -->
 
@@ -536,20 +556,29 @@ m2 <- rda(spe ~ k + sand + conductivity, data=env)
 # CCA: constrained correspondence analysis
 m3 <- cca(spe ~ k + sand + conductivity, data=env)
 
+# FSO: fuzzy set ordination
+m4 <- fso::fso(...)
+
 # summaries
 m1
 m2
 m3
+m4
 
-# compare three kinds of ordination
-par(mfrow=c(1,3), bty='l', las=1)
+# compare four kinds of ordination
+u <- colvec(env$k)                # color vector
+par(mfrow=c(2,2), bty='l', las=1)
 plot(m1)
-points(m1, pch=16, col=colvec(env$k))
+points(m1, pch=16, col=u)
 plot(m2)
-points(m2, pch=16, col=colvec(env$k))
+points(m2, pch=16, col=u)
 plot(m3)
-points(m3, pch=16, col=colvec(env$k))
+points(m3, pch=16, col=u)
+plot(m4)
+points(m4, pch=16, col=u)
 ```
+
+### Key references
 
 
 <!-- --------------------------------------------- -->
@@ -559,21 +588,38 @@ points(m3, pch=16, col=colvec(env$k))
 
 #### *How to group sites according to dissimilarity of community compositions?*
 
+
+### Ward's clustering
 ```{r clustering, exercise=TRUE}
 # clustering to form groups
 cl  <- hclust(D, method='ward.D2') # clustering solution
 grp <- cutree(cl, 4)               # group memberships
 
-# plot the clustering tree, and the cluster groups on an ordination
+# plot the clustering tree, and the cluster groups, on an ordination
 par(mfrow=c(1,2), bty='l', las=1)
 plot(cl, col=grp, cex=0.7)
 rect.hclust(cl, 4, border=1:4)
 plot(scores(m1), pch=16, col=grp)
 ordicluster(m1, cl, prune=3, col=grp)
-
-# # optimal partitioning
-# require(optpart)
 ```
+
+
+### Fuzzy clustering
+
+
+
+### Optimal partitioning
+```r 
+# optimal partitioning
+require(optpart)
+
+```
+
+
+### Cluster evaluation and goodness-of-fit
+
+
+### Key references
 
 
 <!-- --------------------------------------------- -->
@@ -582,6 +628,8 @@ ordicluster(m1, cl, prune=3, col=grp)
 ## Group differences
 
 #### *Do community compositions significantly differ among groups?*
+
+Let's assume PERMANOVA is the best choice for comparing groups in multivariate space. Other methods (ANOSIM, MRPP) exist, but PERMANOVA usually has better power and false-detection rates, even when groups may have different dispersions (Anderson and Walsh 2013) among other operational advantages.
 
 ```{r grp-differences, exercise=TRUE}
 
@@ -625,6 +673,10 @@ setBlocks(customperm) <- blk
 adonis(D ~ env$grp, permutations=customperm)
 ```
 
+### Key references
+
+Anderson, M. J., and D. C. I. Walsh. 2013. PERMANOVA, ANOSIM, and the Mantel test in the face of heterogeneous dispersions: What null hypothesis are you testing? *Ecological Monographs* 83:557–574. https://doi.org/10.1890/12-2010.1
+
 
 <!-- --------------------------------------------- -->
 
@@ -633,11 +685,9 @@ adonis(D ~ env$grp, permutations=customperm)
 
 #### *Which species are indicative of pre-defined groups?*
 
-The Indicator Value (_IndVal_) is the product of a species' fidelity and specificity to a group.  See:  
+The Indicator Value (_IndVal_) is the product of a species' fidelity and specificity to a group (Dufrêne and Legendre 1997).
 
-Dufrêne, M. and Legendre, P. 1997. Species assemblages and indicator species: the need for a flexible asymmetrical approach. _Ecological Monographs_ 67(3): 345--366.  
-
-As well as R package `indicspecies` which tests whether species might indicate _multiple_ groups.
+Here we use `labdsv::indval` to examine indicators of _single_ groups, but also see R package `indicspecies` to test whether species might indicate _multiple_ groups.
 
 ```{r indval, exercise=TRUE}
 grp <- cut(env$clay, 5)                    # define groups by real data
@@ -650,11 +700,14 @@ p.adjust(iv$pval,'holm')        # correction for multiple testing
 
 ```
 
+### Key references
+
+Dufrêne, M. and Legendre, P. 1997. Species assemblages and indicator species: the need for a flexible asymmetrical approach. _Ecological Monographs_ 67(3): 345--366.  
 
 <!-- --------------------------------------------- -->
 
 
-## Traits analysis
+## Community traits
 
 #### *How do traits relate to environment?*
 
@@ -699,19 +752,40 @@ The result is a traits-by-site matrix.
 }
 ```
 
+### Key references
+
 
 <!-- --------------------------------------------- -->
 
 
-## Phylogenies
+## Community phylogenetics
 
 #### *How do species' evolutionary relationships explain responses?*
 
 ### Plot phylogenies
 
+```{r phylo-plot, exercise=TRUE}
+
+### basic plotting
+phy                   # basic structure
+plot(phy, cex=0.75)   # basic plotting
+
+### color tip labels by trait values
+plot(phy, cex=0.75, tip.color=colvec(tra$lfp))
+axisPhylo(cex=0.6)    # and add axis
+
+### overlay trait values at tips
+plot(phy, cex=0.75, label.offset = 12)
+tiplabels(pch = 21, bg = c(tra$annual), adj = 2)
+tiplabels(pch = 21, bg = c(tra$biennial), adj = 6)
+tiplabels(pch = 21, bg = c(tra$perennial), adj = 10)
+
+```
+
+
 ### Phylogenetic signal
 
-```{r phylo-signal, exercise=TRUE, exercise.setup = 'ordination'}
+```{r phylo-signal, exercise=TRUE}
 ### detect phylogenetic signal for traits
 K <- sapply(tra, FUN=function(j){
   names(j) <- rownames(tra)
@@ -719,13 +793,202 @@ K <- sapply(tra, FUN=function(j){
 as.matrix(K) # Blomberg's K statistic for continuous traits
 ```
 
-### Community phylogenetic diversity
+### Community phylogenetic analysis
+
+
+### Key references
 
 
 <!-- --------------------------------------------- -->
 
 
-## Further resources
+## Community spatial analysis
+
+_*To what degree are communities structured spatially?*_  
+
+_*How much variation is explained by space, environment, or spatially structured environment?*_
+
+### Mantel test
+
+The Mantel test compares a community dissimilarity matrix to a spatial distance matrix (it can also be used to compare any two dissimilarity matrices, for example, to test goodness-of-fit of Euclidean ordination distances to original community dissimilarities, or two ordination configurations).
+
+Here we ask, is compositional dissimilarity related to spatial distances?
+
+```{r mantel-orig, exercise=TRUE}
+euc <- dist(xy)                            # spatial distance matrix
+vegan::mantel(D, euc, method='spearman')   # spearman *rank* correlation
+# in `ecodist` package, we also get useful bootstrap CIs:
+ecodist::mantel(D ~ euc, mrank=T)          # spearman *rank* correlation
+```
+
+A Mantel correlogram depicts this correlation of compositional dissimilarity at specified lag distances.
+
+```{r mantel-correlogram, exercise=TRUE, exercise.setup='mantel-orig'}
+brk <- seq(0, round(max(euc),-1), by=10)
+plot(ecodist::mgram(D, euc, breaks=brk, nperm=99, mrank=T, nboot=500))
+abline(h=0, col='red')
+plot(vegan::mantel.correlog(D, euc, break.pts=brk, cutoff=F, r.type='spearman',
+                            nperm=99, mult='holm', progressive=T))
+```
+
+### MRM: multiple regression on distance matrices
+
+MRM: multiple regression on distance matrices.
+
+```{r mrm, exercise=TRUE}
+# species dissimilarities are related to space (extremely weakly) and 
+#   potassium (moderately)
+ecodist::MRM(D ~ dist(xy) + dist(env$k), nperm=999) 
+
+# abundance of cosmopolitan bulrush is NOT related to space, 
+#   but is related to potassium (moderately)
+ecodist::MRM(dist(spe$bolboschoenus_maritimus) ~ dist(xy) + dist(env$k), nperm=999) 
+
+```
+
+### PCNM: principle coordinates of neighbor matrices.
+
+We can quantify spatial distances among sites with a Euclidean distance matrix. Performing principal coordinates analysis on this "neighbor matrix" gives us PCNMs: principle coordinates of neighbor matrices.  PCNM scores are interpreted as *orthogonal* explanatory variables at varying spatial scales: think of them as progressively broad-, medium- and local-scale predictors.
+
+```{r pcnm-mapping, exercise=TRUE, out.width="97%"}
+euc <- dist(xy)                 # euclidean distances between sites
+pc  <- pcnm(euc)                # principal coordinates of neighbor matrices
+par(mfrow=c(2,3))               # map PCNMs across the study area
+v <- c(1,2,4,8,16,32)
+for(i in seq_along(v)) {
+  ordisurf(xy, scores(pc, choices=v[i]), bubble=3, main=paste0('PCNM ',v[i]))
+}
+```
+
+We can use *weighted* PCNMs as explanatory variables in CCA to construct a multiscale ordination (MSO) variogram.  Residual variance here would indicate spatial autocorrelation; we hope for this to exhibit no distance trend since we accounted for spatial autocorrelation.
+
+```{r pcnm-mso, exercise=TRUE}
+euc <- dist(xy)                 # euclidean distances between sites
+rs  <- rowSums(spe) / sum(spe)  # sites weighted by abundances 
+pc  <- pcnm(dist(xy), w = rs)   # *weighted* principal coordinates of neighbor matrices
+ord <- cca(spe ~ scores(pc))    # CCA: species constrained by space
+msord <- mso(ord, xy)           # multiscale ordination
+msoplot(msord, expl=T) # MSO variogram: spatial trend in residual var?
+```
+
+Using the weighted PCNMs above, we can perform variance partitioning of species dissimilarities in dbRDA (distance-based RDA).  This particular variation partitioning shows the amount of variation in species dissimilarities (**D**) explained by 1) space, 2) environment, and 3) spatially-structured environment.
+
+```{r pcnm-varpart-01, exercise=TRUE, exercise.setup='pcnm-mso'}
+(vp <- varpart(D, env, scores(pc))) 
+plot(vp, bg = c(2,4))
+text(-0.2, 0.3, 'Environment', cex=0.7)
+text(0.5, 0.3, 'Spatially-\nstructured\nenviro', cex=0.7)
+text(1.2, 0.3, 'Space', cex=0.7)
+```
+
+We can include more explanatory matrices -- here, species dissimilarities explained by 1) environment, 2) broad spatial, and 3) local spatial.
+
+```{r pcnm-varpart-02, exercise=TRUE, exercise.setup='pcnm-mso'}
+
+pc_broad <- scores(pc)[,1:10]
+pc_local <- scores(pc)[,11:59]
+(vp <- varpart(D, env, pc_broad, pc_local)) 
+plot(vp, cex=0.7, bg=2:5) 
+text(-0.2, 0.3, 'Environment', cex=0.7)
+text(0.5, 0.55, 'Broad-\nstructured\nenviro', cex=0.7)
+text(1.2, 0.3, 'Broad\nspatial', cex=0.7)
+text(-0.5, -0.75, 'Local-\nstructured\nenviro', cex=0.7)
+text(0.5, -1.15, 'Local\nspatial', cex=0.7)
+### Thinker: why do broad and local share in common zero variance explained?
+```
+
+We can include more explanatory matrices -- here, species dissimilarities explained by 1) soil fractions, 2) soil chemistry, and 3) spatial processes.
+
+```{r pcnm-varpart-03, exercise=TRUE, exercise.setup='pcnm-mso'}
+(vp <- varpart(D,                               # dissimilarities
+               ~ clay + sand + silt,            # soil fractions
+               ~ mg + k + conductivity + na_l,  # soil chemistry
+               scores(pc),                      # spatial predictors
+               data=env))
+plot(vp, cex=0.7, bg=2:5)
+text(-0.2, 0.3, 'Soil fractions', cex=0.7)
+text(1.2, 0.3, 'Soil chemistry', cex=0.7)
+text(0.5, -1.15, 'Spatial', cex=0.7)
+text(-0.5, -0.75, 'Spatially-\nstructured\nsoil fractions', cex=0.7)
+text(1.5, -0.75, 'Spatially-\nstructured\nsoil chemistry', cex=0.7)
+### Thinker: how do you interpret this figure?  
+### Moderate spatial structuring, a bit owing to soil chemistry,
+### but mostly to other unmeasured spatial processes (dispersal?).
+
+### Thinker: what does this NOT explain?  
+### What is the biological cause of residual variation?
+### We did ordination in 1) species space, 2) env space, 
+###   3) env constrained spp space?
+```
+
+
+### SYNCSA
+
+
+
+### Key references
+
+Borcard D. and Legendre P. 2002. All-scale spatial analysis of ecological data by means of principal coordinates of neighbour matrices. _Ecological Modelling_ 153: 51-68.
+
+Dray, S., R. Pélissier, P. Couteron, M.-J. Fortin, P. Legendre, P. R. Peres-Neto, E. Bellier, R. Bivand, F. G. Blanchet, M. De Cáceres, A.-B. Dufour, E. Heegaard, T. Jombart, F. Munoz, J. Oksanen, J. Thioulouse, and H. H. Wagner. 2012. Community ecology in the age of multivariate multiscale spatial analysis. _Ecological Monographs_ 82: 257-275.
+
+Lichstein, J. 2007. Multiple regression on distance matrices: a multivariate spatial analysis tool. _Plant Ecology_ 188:117-131.
+
+Mantel, N. 1967. The detection of disease clustering and a generalized regression approach. _Cancer Research_ 27:209-220.
+
+McArdle, B.H. & Anderson, M.J. 2001. Fitting multivariate models to community data: a comment on distance-based redundancy analysis. _Ecology_ 82: 290-297.
+
+Wagner, H.H. 2004. Direct multi-scale ordination with canonical correspondence analysis. _Ecology_ 85: 342-351.
+
+
+<!-- --------------------------------------------- -->
+
+
+## Appendix 1: Workflow example
+
+### Best practices (opinionated)
+
+This common workflow uses common practices in ecological community analysis.  It is by no means universal or obligatory!
+
+**Data I/O:** read data into R (typically `read.csv` if CSV files).
+
+**Basic exploration:** use basic commands to examine data structure (`str`), peek at data (`head`), see the frequency distribution (`hist`), make biplots (`plot` or `pairs`).
+
+**Advanced exploration:** `vegan::tabasco` or `labdsv::`
+
+**Transformations:** log10+1 for abundances, row-standardize abundances to put sites on equal footing, range standardize for enviro or traits(so all on same scale) -- McCune
+
+**Outliers:**
+
+**Community dissimilarities:** Bray-Curtis -- Legendre and Legendre 2012
+
+**Environmental distances:** (scaled) Euclidean
+
+**Dissimilarity adjustments:** step-across shortest distance if high beta-diversity -- Smith
+
+**Ordination of sites, based on communities:** NMS -- Minchin
+
+**Ordination of sites, based on environment:** PCA -- linear combinations
+
+**Ordination of sites, based on communities constrained by environment:** dbRDA or FSO
+
+**Comparing ordination configurations:** Procrustes -- Peres-Neto
+
+**Clustering:** optpart or or fuzzy clustering or Wards -- Roberts
+
+**Group differences:** PERMANOVA --Anderson
+
+**Group indicator species:** IndVal -- Dufrene and Legendre
+
+
+
+
+
+
+<!-- --------------------------------------------- -->
+
+
+## Appendix 2: Further resources
 
 #### General R usage
 
@@ -758,7 +1021,83 @@ as.matrix(K) # Blomberg's K statistic for continuous traits
 <!-- --------------------------------------------- -->
 
 
-## FAQ
+## Appendix 3: FAQ
 
 [Why are we here today?](#why-here)
+
 [Where did this dataset originate? How do I use it?](#data-origin)
+
+etc
+
+
+<!-- <!-- --------------------------------------------- --> -->
+
+
+<!-- ## Direct gradient analysis -->
+
+<!-- #### *How does this species (or trait, or ...) relate to an environmental gradient?* -->
+
+<!-- ```{r direct-gradient-analysis, exercise=TRUE} -->
+<!-- # prepare vector data -->
+<!-- y <- rowSums((spe > 0) * 1)  # response vector = species richness -->
+<!-- x <- env[,'k']               # predictor vector = potassium concentration -->
+
+<!-- # fit two models -->
+<!-- mod_linear    <- stats::lm(y ~ x)                # simple linear model -->
+<!-- mod_nonlinear <- mgcv::gam(y ~ s(x), gamma=0.25) # nonlinear GAM model -->
+
+<!-- # view model summaries -->
+<!-- summary(mod_linear) -->
+<!-- summary(mod_nonlinear) -->
+
+<!-- # visualize fitted values -->
+<!-- plot(x, y, xlab='Potassium', ylab='Richness', pch=16, col='#00000050') -->
+<!-- xs <- seq(min(x), max(x), len = 99) -->
+<!-- lines(xs, predict(mod_linear, data.frame(x = xs)), lwd = 2, col='darkblue') -->
+<!-- lines(xs, predict(mod_nonlinear, data.frame(x = xs)), lwd = 2, col='orange') -->
+
+<!-- # LETS PREDICT onto a landscape grid (raster) -->
+<!-- # first, simulate data with spatial pattern (negative exponential decay) -->
+<!-- `simulate_grid` <- function(nr = 49, seed = 2021, ...) { -->
+<!--   g <- expand.grid(lon=seq(0,1,len=nr),lat=seq(0,1,len=nr)) # all combos -->
+<!--   `f` <- function(n, mu = 0, V = matrix(1)) { # multivariate normal sampling -->
+<!--     p <- length(mu) -->
+<!--     t(matrix(rnorm(n * p), ncol=p) %*% chol(V) + rep(mu, rep(n, p))) -->
+<!--   } -->
+<!--   set.seed(seed=seed) -->
+<!--   k <- f(1, rep(3,nrow(g)), exp(-0.05 * as.matrix(dist(g)))) # do sampling -->
+<!--   k <- decostand(scale(k, center=F), 'range')                # re-scale 0-1 -->
+<!--   return(cbind(g,k)) # soil value at each lon/lat -->
+<!-- } -->
+<!-- nr <- 49 -->
+<!-- g <- simulate_grid(nr) -->
+
+<!-- # predict from the models -->
+<!-- g$pr_lin <- predict(mod_linear, newdata=data.frame(x=g$k)) -->
+<!-- g$pr_non <- predict(mod_nonlinear, newdata=data.frame(x=g$k)) -->
+
+<!-- # plot the landscapes -->
+<!-- u  <- c('#414487','#39558C','#30698E','#297A8E','#228B8D','#1E9C89', -->
+<!--         '#26AD81','#40BD72','#65CB5E','#90D743','#BBDF27') # colors -->
+<!-- par(mfrow=c(1,3)) -->
+<!-- image(matrix(g$k, nrow=nr), col=u, main='patchy landscape\nof potassium') -->
+<!-- image(matrix(g$pr_lin, nrow=nr), col=u, main='species richness,\nlinear') -->
+<!-- image(matrix(g$pr_non, nrow=nr), col=u, main='species richness,\nnonlinear') -->
+<!-- ``` -->
+
+
+
+
+
+
+<!-- ### Best subset of environmental predictors -->
+
+<!-- Which environmental predictors are most related to community compositions?  We can find this by maximizing the rank correlation between environmental distances and community dissimilarities, using the BIOENV procedure. -->
+
+<!-- ```{r best-bioenv, exercise=TRUE} -->
+<!-- best <- bioenv(D, env=env[,sapply(env, is.numeric)], upto=3, trace=T) -->
+<!-- best -->
+<!-- ``` -->
+
+
+
