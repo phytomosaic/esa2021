@@ -46,6 +46,8 @@ env <- data.frame(decostand(scale(env, center=F), 'range'))
 tra <- data.frame(decostand(tra, 'range'))
 d   <- vegdist(spe, method='bray', binary=T)
 D   <- stepacross(d, 'shortest', toolong=1, trace=F)
+cl  <- vegclustdist(D, mobileMemb=7, method='FCM', m=1.2, nstart=5)
+grp <- defuzzify(cl, 'max')[[2]]
 m1  <- metaMDS(D, k=2, try=200, trymax=500, trace=0)  # NMS
 m2  <- cmdscale(D, k=2, add=T)               # PCoA
 m3  <- prcomp(spe)                           # PCA
@@ -592,24 +594,111 @@ points(m4, pch=16, col=u)
 #### *How to group sites according to dissimilarity of community compositions?*
 
 
-### Ward's clustering
-```{r clustering, exercise=TRUE}
-# clustering to form groups
-cl  <- hclust(D, method='ward.D2') # clustering solution
-grp <- cutree(cl, 4)               # group memberships
+### Hierarchical: Ward's clustering
 
-# plot the clustering tree, and the cluster groups, on an ordination
-par(mfrow=c(1,2), bty='l', las=1)
-plot(cl, col=grp, cex=0.7)
-rect.hclust(cl, 4, border=1:4)
-plot(scores(m1), pch=16, col=grp)
-ordicluster(m1, cl, prune=3, col=grp)
+```{r wards, exercise=TRUE, fig.asp=0.50}
+k   <- 7                           # number of groups is specified in advance
+cl  <- hclust(D, method='ward.D2') # clustering solution
+grp <- cutree(cl, k)               # group memberships
+
+# plot the dendrogram, and plot the groups onto an NMS ordination
+u <- colvec(grp)
+par(mfrow=c(1,2), bty='l', las=1, oma=c(0,0,0,0), mar=c(3,3,0.5,0.5))
+plot(cl, cex=0.5, main='')
+rect.hclust(cl, k, border=unique(u))
+plot(scores(m1), pch=16, cex=0.7, col=u)
+ordicluster(m1, cl, prune=k, lwd=0.5, col=u)
 ```
 
 
-### Fuzzy clustering
+### Non-hierarchical: fuzzy clustering
 
+It may be useful to define groups based on _fuzzy_ rather than _crisp_ partitions.  Do a few kinds of fuzzy clustering:
 
+```{r fuzz-01, exercise=TRUE, exercise.timelimit = 20}
+ns   <- 1       # number of random starts (increase for real analyses!)
+k    <- 7       # number of groups is specified in advance
+# fuzzy c-means
+cl   <- vegclustdist(D, mobileMemb=k, method='FCM', m=1.2, nstart=ns)
+# fuzzy c-means with a noise cluster
+cl_a <- vegclustdist(D, mobileMemb=k, method='NC', m=1.2, dnoise=0.8, nstart=ns)
+# fuzzy c-medoids
+cl_b <- vegclustdist(D, mobileMemb=k, method='FCMdd', m=1.2, nstart=ns)
+# crisp k-means
+cl_c <- vegclustdist(D, mobileMemb=k, method='KM', nstart=ns)
+
+# how well do the other methods agree with fuzzy c-means?
+concordance(cl, cl_a)
+concordance(cl, cl_b)
+concordance(cl, cl_c)
+
+```
+
+Let's examine group memberships `grp` from the fuzzy clustering.  While memberships are fuzzy, we can ask for a _crisp_ membership based on a threshold or else the maximum fuzzy membership.
+
+```{r fuzz-02, exercise=TRUE}
+head(round(cl$memb, 2))               # fuzzy membership
+(grp <- defuzzify(cl, 'cut', alpha=0.8)[[2]]) # crisp, at threshold (incl NAs)
+(grp <- defuzzify(cl, 'max')[[2]])    # crisp membership, at max membership
+table(grp, useNA='always')            # tally points per group
+```
+
+Also examine the group characteristics:
+
+```{r fuzz-03, exercise=TRUE}
+### examine group characteristics
+cl$size                               # group size (sum of fuzzy memberships)
+cl$withinss                           # group sums-of-squares
+round(ctr <- clustcentroid(D, grp),3) # group centroids
+(medoids  <- clustmedoid(spe, grp))   # *indices* of group medoids
+clustvar(D, grp)                      # within-group variance
+clustvar(D)                           # pooled among-group variance
+as.dist(D_ctr <- as.matrix(interclustdist(D, grp))) # dissim among centroids
+as.dist(D_med <- as.matrix(D)[medoids,medoids])     # dissim among medoids
+```
+
+How are species represented per group? Examine species frequency (constancy) per group:
+
+```{r fuzz-04, exercise=TRUE}
+con <- clustconst(spe, memb=as.memb(grp))
+tabasco(t(con), col=get_palette())    # constancy per group
+summary(con, mode='all')              # constancy per group
+summary(con, mode='cluster', 'M1')    # examine one particular group
+```
+
+How to choose a valid number of groups? Systematically vary _k_, then evaluate. PCN = normalized partition coefficient (higher is better). PEN = normalized partition entropy (lower is better).
+
+```{r fuzz-05, exercise=TRUE}
+### systematically vary k from 3 to 9, then evaluate
+cl_k <- random.vegclustdist(D, cmin=3, cmax=9, method='FCM', m=1.2)
+sapply(seq_along(cl_k), function(i) vegclustIndex(cl_k[[i]])) # evaluate!
+```
+
+You may wish to add new sites to an existing classification.  For example, imagine we fit a model using "western" sites, and now must assign values for the "eastern" sites.
+
+```{r fuzz-06, exercise=TRUE, fig.asp=0.667}
+### assign *new* sites to an *existing* classification ---
+i    <- (xy$x < 220)                  # split the dataset, based on location
+west <- spe[i,]                       # old calibration data = west
+west <- west[,colSums(west) > 0]      # exclude zero-sum species
+east <- spe[!i,]                      # new evaluation data = east
+east <- east[,colSums(east) > 0]      # exclude zero-sum species
+k    <- 7                             # number of groups specified in advance
+(grp_west <- cutree(hclust(vegdist(west), 'ward.D2'), k)) # *existing* model
+cl_west   <- as.vegclust(vegdist(west), grp_west) # convert to vegclust object
+m  <- conformveg(west, east)                      # merge datasets
+DD <- as.matrix(vegdist(rbind(m$x,m$y)))          # ALL dissimilarities
+DD <- DD[(NROW(west)+1):NCOL(DD), 1:NROW(west)]   # rows = new, cols = old
+cl_east <- vegclass(cl_west, DD)      # assign new points given existing model
+grp_west <- defuzzify(cl_west)[[2]]   # memberships of *old* points
+grp_east <- defuzzify(cl_east)[[2]]   # memberships of *new* points
+grp <- c(grp_west,grp_east)
+par(mfrow=c(1,2), oma=c(0,0,0,0), mar=c(2,2,1,0))
+plot(xy, col=i+1, pch=16)             # map east/west locations
+plot(xy, col=colvec(grp), pch=16)     # map group memberships
+text(xy, grp)                         # identify group membership
+legend('bottomleft', leg=1:k, fill=unique(colvec(grp)), title='Group', cex=0.7)
+```
 
 ### Optimal partitioning
 ```r 
