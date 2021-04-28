@@ -18,7 +18,7 @@ description: "Community analysis of species, traits, phylogenies, and responses 
 
 ```{r begin, include=FALSE, eval=TRUE}
 require(learnr)
-knitr::opts_chunk$set(echo = TRUE, eval = TRUE, include = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, include = TRUE, out.width="99%")
 knitr::knit_theme$set("rootwater")
 learnr::tutorial_options(exercise.timelimit = 10, exercise.eval = FALSE, exercise.completion = TRUE)
 ```
@@ -76,6 +76,7 @@ m3  <- prcomp(spe)                           # PCA
   pal <- get_palette()
   return(pal[cut(as.numeric(x), breaks=length(pal), include.lowest=TRUE)])
 }
+### HIDDEN ###
 ```
 
 
@@ -93,7 +94,9 @@ List here.
 
 ### Assumptions
 
-We assume you have a basic familiarity with R.  If not, please go [here]().  At the least, you should be able to assign an object, distinguish between different objects (vector, matrix, data.frame, etc.), and index rows/columns of a matrix or data.frame.
+We assume you have a basic familiarity with R.  If not, please peruse [here](http://ecology.msu.montana.edu/labdsv/R/labs/R_ecology.html).  At the least, you should be able to assign an object, distinguish between different objects (vector, matrix, data.frame, etc.), and index rows/columns of a matrix or data.frame.
+
+We assume you have familiarity with basic statistics (population vs sample; mean, SD, SE, CI; simple linear models), and have at least dabbled in linear algebra (matrices; linear combinations), and perhaps become suspicious that calculus may indeed exist.  If not, you could brush up on [matrices](https://courses.lumenlearning.com/boundless-algebra/chapter/introduction-to-matrices/).
 
 ### Software installation
 
@@ -815,7 +818,7 @@ The Mantel test compares a community dissimilarity matrix to a spatial distance 
 Here we ask, is compositional dissimilarity related to spatial distances?
 
 ```{r mantel-orig, exercise=TRUE}
-euc <- dist(xy)                            # spatial distance matrix
+E <- dist(xy)                            # spatial distance matrix
 vegan::mantel(D, euc, method='spearman')   # spearman *rank* correlation
 # in `ecodist` package, we also get useful bootstrap CIs:
 ecodist::mantel(D ~ euc, mrank=T)          # spearman *rank* correlation
@@ -850,25 +853,25 @@ ecodist::MRM(dist(spe$bolboschoenus_maritimus) ~ dist(xy) + dist(env$k), nperm=9
 
 We can quantify spatial distances among sites with a Euclidean distance matrix. Performing principal coordinates analysis on this "neighbor matrix" gives us PCNMs: principle coordinates of neighbor matrices.  PCNM scores are interpreted as *orthogonal* explanatory variables at varying spatial scales: think of them as progressively broad-, medium- and local-scale predictors.
 
-```{r pcnm-mapping, exercise=TRUE, out.width="97%"}
-euc <- dist(xy)                 # euclidean distances between sites
-pc  <- pcnm(euc)                # principal coordinates of neighbor matrices
-par(mfrow=c(2,3))               # map PCNMs across the study area
-v <- c(1,2,4,8,16,32)
+```{r pcnm-mapping, exercise=TRUE, fig.asp=0.555}
+E   <- dist(xy)                    # euclidean distances between sites
+pc  <- pcnm(euc)                   # principal coordinates of neighbor matrices
+par(mfrow=c(2,3), oma=c(0,0,0,0), mar=c(2,2,2,0)) # map PCNMs across study area
+v   <- 2^(0:5)                     # select PCNMs at increasingly fine scale
 for(i in seq_along(v)) {
   ordisurf(xy, scores(pc, choices=v[i]), bubble=3, main=paste0('PCNM ',v[i]))
 }
 ```
 
-We can use *weighted* PCNMs as explanatory variables in CCA to construct a multiscale ordination (MSO) variogram.  Residual variance here would indicate spatial autocorrelation; we hope for this to exhibit no distance trend since we accounted for spatial autocorrelation.
+We can use *weighted* principle coordinates of neighbor matrices as explanatory variables in CCA to construct a multiscale ordination (MSO) variogram.  Residual variance here would indicate spatial autocorrelation; we hope for this to exhibit no trend with distance, since PCNMs account for spatial autocorrelation.
 
 ```{r pcnm-mso, exercise=TRUE}
-euc <- dist(xy)                 # euclidean distances between sites
-rs  <- rowSums(spe) / sum(spe)  # sites weighted by abundances 
-pc  <- pcnm(dist(xy), w = rs)   # *weighted* principal coordinates of neighbor matrices
-ord <- cca(spe ~ scores(pc))    # CCA: species constrained by space
-msord <- mso(ord, xy)           # multiscale ordination
-msoplot(msord, expl=T) # MSO variogram: spatial trend in residual var?
+E     <- dist(xy)                 # euclidean distances between sites
+rs    <- rowSums(spe) / sum(spe)  # sites weighted by abundances 
+pc    <- pcnm(E, w=rs)            # *weighted* PCNMs
+ord   <- cca(spe ~ scores(pc))    # CCA: species constrained by space
+msord <- mso(ord, xy)             # multiscale ordination
+msoplot(msord, expl=T)            # MSO variogram: spatial trend in residuals?
 ```
 
 Using the weighted PCNMs above, we can perform variance partitioning of species dissimilarities in dbRDA (distance-based RDA).  This particular variation partitioning shows the amount of variation in species dissimilarities (**D**) explained by 1) space, 2) environment, and 3) spatially-structured environment.
@@ -884,7 +887,6 @@ text(1.2, 0.3, 'Space', cex=0.7)
 We can include more explanatory matrices -- here, species dissimilarities explained by 1) environment, 2) broad spatial, and 3) local spatial.
 
 ```{r pcnm-varpart-02, exercise=TRUE, exercise.setup='pcnm-mso'}
-
 pc_broad <- scores(pc)[,1:10]
 pc_local <- scores(pc)[,11:59]
 (vp <- varpart(D, env, pc_broad, pc_local)) 
@@ -894,7 +896,7 @@ text(0.5, 0.55, 'Broad-\nstructured\nenviro', cex=0.7)
 text(1.2, 0.3, 'Broad\nspatial', cex=0.7)
 text(-0.5, -0.75, 'Local-\nstructured\nenviro', cex=0.7)
 text(0.5, -1.15, 'Local\nspatial', cex=0.7)
-### Thinker: why do broad and local share in common zero variance explained?
+### Thinker: why do "broad" and "local" share in common zero variance explained?
 ```
 
 We can include more explanatory matrices -- here, species dissimilarities explained by 1) soil fractions, 2) soil chemistry, and 3) spatial processes.
