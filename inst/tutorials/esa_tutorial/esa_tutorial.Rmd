@@ -124,7 +124,9 @@ To use functions provided by packages, load them into your R environment.  Again
 require(vegan)
 require(labdsv)
 require(ade4)
+require(ecodist)
 require(optpart)
+require(vegclust)
 require(ape)
 require(picante)
 require(mgcv)
@@ -132,12 +134,11 @@ require(mgcv)
 
 ### Useful functions to explore
 
-Base R already contains lots of useful functions.  Use a few basic functions to explore a dataset called `spe`.
+Base R already contains lots of useful functions.  This list has a few basic functions: 
 
-```{r useful-functions, exercise=TRUE}
-### for help, put ? in front of any function, like `?ls()`
-ls()          # list items in environment
-dim(spe)      # dimensions of an object
+```
+ls()
+dim(spe)
 NROW(spe)
 NCOL(spe)
 str(spe)
@@ -149,13 +150,18 @@ hist(x)
 plot(x)
 rm(x)
 ```
+From the list above, copy-and-paste some commands into the code box below, and help describe a dataset called `spe`.  What is inside that object?  What size is it?
+
+```{r blank-to-try-functions, exercise=TRUE}
+
+```
 
 ### Define objects and functions
 
-We've already said that you can use functions from other packages.  But you can also "roll your own"!  Functions take the generic form `f <- function(x) { x }`.  For example:
+We've already said that you can use functions from base R or from other packages.  But you can also "roll your own"!  Functions take the generic form `f <- function(x) { x }`.  For example:
 
 ```{r define-functions, exercise=TRUE}
-# function (a silly one): pick an item from the vector by position
+# function to pick an item from the vector by position
 `item_picker` <- function(x, pos = NULL) {
   x[pos]
 }
@@ -179,7 +185,7 @@ We will use one core dataset throughout this tutorial. The `veg` dataset gives i
 
 ### Load data
 
-A common task is to read from CSV files, e.g., `x <- read.csv('path/to/file.csv')`, but here we will load data that's already in R format.
+A common task in R is to read from CSV files, e.g., `x <- read.csv('path/to/file.csv')`, but here we will load data that's already in R format.
 
 ```{r data-load, exercise=FALSE, eval=FALSE}
 load('veg.rda')  # assumed to be in your working dir
@@ -230,12 +236,20 @@ Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linki
 
 ### Check data structure
 
-```{r structure, exercise=TRUE}
+A first step in exploring ecological data is to examine its structure.  Run some of this code, one at a time:
+
+```
 str(spe)     # community (species) abundance matrix
 str(env)     # environmental matrix
 str(tra)     # traits matrix
 str(phy, 1)  # phylogeny
 str(xy)      # spatial coordinates
+```
+
+```{r structure, exercise=TRUE}
+
+### run code here
+
 ```
 
 ### Find and replace troublesome values
@@ -261,7 +275,7 @@ rm(s)
 ### Data transformations
 
 
-```{r transformations-setup, exercise=TRUE}
+```{r transformations-setup, exercise=FALSE, include=FALSE}
 ### HIDDEN
 load('veg.rda')  # assumed to be in your working dir
 spe <- veg$spe   # species
