@@ -39,3 +39,6 @@ rsconnect/
 # dotfiles
 .*
 !.gitignore
+
+# vignettes (actually where the survey is housed)
+/vignettes/
