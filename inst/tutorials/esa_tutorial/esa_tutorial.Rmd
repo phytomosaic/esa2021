@@ -51,6 +51,8 @@ grp <- defuzzify(cl, 'max')[[2]]
 m1  <- metaMDS(D, k=2, try=200, trymax=500, trace=0)  # NMS
 m2  <- cmdscale(D, k=2, add=T)               # PCoA
 m3  <- prcomp(spe)                           # PCA
+env$grp <- cut(env$k, quantile(env$k, probs=seq(0,1,by=0.25)), include.lowest=T,
+               labels=c('lo','med','hi','veryhi')) # group memberships for K
 `get_palette` <- function() {
   pal <- c('#414487E6','#404688E6','#3F4889E6','#3E4989E6','#3E4C8AE6',
            '#3D4E8AE6','#3C508BE6','#3B528BE6','#3A548CE6','#39558CE6',
@@ -307,7 +309,22 @@ rm(s)
 
 ### Outliers
 
-Here.
+A quick way to search for *multivariate* outliers is to use the distance/dissimilarity matrix.  An "outlier" is the sample unit(s) which exceed a defined number of SDs away from the grand mean (i.e., a large _z_-score).
+
+```{r}
+`outliers` <- function (x, mult=2, method='bray') {
+  d <- as.matrix(vegan::vegdist(x, method=method, binary=F, diag=T, upper=T))
+  diag(d) <- as.numeric(1)     # avoid zero-multiplication
+  m       <- apply(d, 2, mean) # site means
+  z       <- scale(m)          # z-scores
+  data.frame(mean_dist = m, z = z, is_outlier = abs(z) >= mult)
+}
+### try it
+data(dune, package='vegan')
+spe <- rbind(runif(ncol(dune),0,1000), dune) # add an outlier row
+head(outliers(spe, mult=2), 7)
+```
+
 
 ### Test validity of species matrix
 
@@ -684,7 +701,7 @@ How to choose a valid number of groups? Systematically vary _k_, then evaluate. 
 
 ```{r fuzz-05, exercise=TRUE}
 ### systematically vary k from 3 to 9, then evaluate
-cl_k <- random.vegclustdist(D, cmin=3, cmax=9, method='FCM', m=1.2)
+cl_k <- random.vegclustdist(D, cmin=3, cmax=9, nstart=3, method='FCM', m=1.2)
 sapply(seq_along(cl_k), function(i) vegclustIndex(cl_k[[i]])) # evaluate!
 ```
 
@@ -737,46 +754,66 @@ require(optpart)
 
 Let's assume PERMANOVA is the best choice for comparing groups in multivariate space. Other methods (ANOSIM, MRPP) exist, but PERMANOVA usually has better power and false-detection rates, even when groups may have different dispersions (Anderson and Walsh 2013) among other operational advantages.
 
-```{r grp-differences, exercise=TRUE}
+```{r grp-define, exercise=TRUE}
+### define and visualize four groups
+brk     <- quantile(env$k, probs=seq(0,1,by=0.25))   # define breaks
+env$grp <- cut(env$k, brk, include.lowest=T,
+               labels=c('lo','med','hi','veryhi'))   # group memberships
+table(env$grp, useNA='always')                       # group tally
+tapply(env$k, INDEX = env$grp, FUN = mean)           # group means
+plot(m1$points, pch=NA)                              # visualize on the NMS
+text(m1$points, labels=env$grp, col=as.numeric(env$grp)) # group memberships
+ordispider(m1, groups=env$grp, col=1:4)              # group centroids 
+```
 
-# define four groups, based on equal number of observations
-(p <- quantile(env$k, probs = seq(0, 1, by=0.25))) # quantiles
-env$grp <- cut(env$k, p)                   # group memberships
-table(env$grp)                             # count per group
-tapply(env$k, INDEX = env$grp, FUN = mean) # group means
+### Test for difference in community compositions
 
-# permanova: test for differences in multivariate *centroid*
+PERMANOVA tests for differences in multivariate centroid, _in the space of the chosen dissimilarity measure_.  Recall that matrix `D` was our matrix of pairwise Bray-Curtis dissimilarities.
+
+```{r grp-diff-permanova, exercise=TRUE}
+### permanova: test for differences in multivariate *centroid*
 a1 <- adonis(D ~ env$grp, permu=999)
-print(a1)
+a1
+```
 
-# permdisp: test for differences in multivariate *dispersion*
+How do we interpret this result?  Based on Bray-Curtis dissimilarities, four groups defined by soil potassium significantly differed in community compositions (PERMANOVA pseudo-_F_ = 10.2, permutational _p_ = 0.001, _R_^2^ = 0.25).  The NMS ordination helps us see that this is largely driven by the "veryhi" group.  Which you can test formally by repeating PERMANOVA for pairwise multiple comparisons.
+
+### Test for homogeneity of community compositions
+
+A related test, PERMDISP, tests for differences in multivariate dispersion, _in the space of the chosen dissimilarity measure_. This is interpreted as a test of among-group homogeneity of community compositions, i.e., beta-diversity.  Conveniently, we can ask for pairwise multiple comparisons.
+
+```{r grp-diff-permdisp, exercise=TRUE}
+### permdisp: test for differences in multivariate *dispersion*
 b1 <- betadisper(D, env$grp)
+b1
 permutest(b1, pairwise=TRUE, permu=999)
+boxplot(b1)
+```
 
-# plot multivariate centroids per group, on the NMS configuration
-centr <- aggregate(scores(m1),
-                   by=list(k_group=env$grp),
-                   mean)[-1]
-plot(m1$points, pch=16, col=env$grp)
-points(centr[1,], pch='+', col=1, cex=3)
-points(centr[2,], pch='+', col=2, cex=3)
-points(centr[3,], pch='+', col=3, cex=3)
-points(centr[4,], pch='+', col=4, cex=3)
+How do we interpret this?  Based on Principal Coordinates reduction of original Bray-Curtis dissimilarities, the four groups defined by soil potassium significantly differed in homogeneity of community compositions (PERMDISP _F_ = 7.98, permutational _p_ = 0.001).  This was due to the "veryhi" potassium group having significantly lower dispersion (lower beta-diversity) than the lower-potassium groups.
 
-# permanova works as 'regular' ANOVA when using Euclidean distances...
-# assume we're interested in species richness differences per group:
-env$richness <- specnumber(spe) 
-De <- vegdist(env$richness, 'euc')
-adonis(De ~ env$grp, perm=999) # examine F and SS
-anova(lm(x$SppRich ~ env$grp)) # expect identical F and SS
+### PERMANOVA equivalence to ANOVA
 
-# blocked design: permutations must occur within strata
-blk <- factor(sample(rep(1:12,len=nrow(x)))) # make arbitrary 'blocks'
-plot(scores(m1), pch=16, col=colvec(x$SppRich))
-ordiellipse(m1, blk, label=TRUE)
-customperm <- how(nperm=999)
-setBlocks(customperm) <- blk
-adonis(D ~ env$grp, permutations=customperm)
+PERMANOVA works as 'regular' ANOVA when using Euclidean distances.  We'd expect a different _p_-value since we're using permutations, but identical _F_-values and sums-of-squares.
+
+```{r grp-diff-equivalence, exercise=TRUE}
+De <- dist(env$k, 'euc')            # Euclidean distances
+adonis(De ~ env$grp, perm=999)      # examine F and SS
+print(anova(lm(k ~ grp, env)))      # expect identical F and SS
+```
+
+### PERMANOVA for blocked design
+
+For blocked designs (e.g., for repeated measures or genuine blocked designs), we must specify how permutations occur.  Because units are only exchangeable _within blocks_, the permutations should occur within blocks.
+
+```{r grp-diff-blocked, exercise=TRUE}
+### blocked design: permutations must occur within strata
+blk <- factor(LETTERS[sample(rep(1:12,len=nrow(env)))]) # arbitrary 'blocks'
+plot(m1)                                       # visualize on NMS
+ordispider(m1, blk, label=TRUE)
+customperm <- how(nperm=999)                   # set number of permutations
+setBlocks(customperm) <- blk                   # permute only *within* blocks
+adonis(D ~ env$grp, permutations=customperm)   # correct test
 ```
 
 ### Key references
@@ -795,16 +832,31 @@ The Indicator Value (_IndVal_) is the product of a species' fidelity and specifi
 
 Here we use `labdsv::indval` to examine indicators of _single_ groups, but also see R package `indicspecies` to test whether species might indicate _multiple_ groups.
 
+First, let's use the same groups we used for PERMANOVA: which species are indicative of the four groups defined by soil potassium?  We can compare these "real" indicator species against a random expectation.
+
 ```{r indval, exercise=TRUE}
-grp <- cut(env$clay, 5)                    # define groups by real data
-rnd <- sample(grp, length(grp), replace=T) # define random groups by bootstrapping
-iv  <- labdsv::indval(spe, grp) # indicator species analysis
-ivr <- labdsv::indval(spe, rnd) # indicator species analysis for *random* groups
+### real groups
+grp <- cut(env$k, quantile(env$k, probs=seq(0,1,by=0.25)), include.lowest=T,
+               labels=c('lo','med','hi','veryhi'))   # group memberships
+iv  <- labdsv::indval(spe, grp) # indicator species analysis for *real* groups
 summary(iv)                     # IndVal observed
+
+### random groups
+rnd <- sample(grp, length(grp), replace=T) # define random groups by bootstrapping
+ivr <- labdsv::indval(spe, rnd) # indicator species analysis for *random* groups
 summary(ivr)                    # IndVal expected at random
-p.adjust(iv$pval,'holm')        # correction for multiple testing
+```
+
+How many indicator species would you expect at random?
+
+```{r indval-null}
+### null expectation setting alpha = 5%
+ceiling( ncol(spe) * 0.05 )
 
 ```
+
+If you defined groups by a clustering method using species information, do not use _IndVal_ to find indicator species of those groups (that would be circular logic).  
+
 
 ### Key references
 
@@ -815,30 +867,33 @@ Dufrêne, M. and Legendre, P. 1997. Species assemblages and indicator species: t
 
 ## Community traits
 
+Recall the traits matrix, which assigns each species (rows) a value for each of twelve traits (columns):
+
+```{r peek-traits, exercise=T}
+head(tra)
+```
+
+We can ask several questions about trait diversity, convergence/divergence, and relationships to environment.
+
 #### *How do traits relate to environment?*
 
 
-#### *Are traits (of species within a site) convergent or divergent?*
+#### *Are traits (of species in a site) convergent or divergent?*
+
+The mean pairwise distance (MPD) shows how far (on average) the traits of one community are relative to all others.  Most commonly these are Euclidean or Gower distances.  A randomization test gives a test statistic called SES, standardized effect size.  Significant positive SES indicates traits are less similar than expected at random (i.e., species have divergent traits), while negative SES indicates traits are more similar than expected at random (i.e., species tend to converge on similar traits). We can examine trait divergence/convergence along a gradient, or test for divergence/convergence within groups.
 
 ```{r trait-converge, exercise=TRUE}
-# Euclidean trait distance (traits already scaled 0-1)
-Dt <- as.matrix(dist(tra, method='euc'))
-# calculate trait standardized effect size of mean pairwise distances in sites
-ses <- picante::ses.mpd(spe, Dt, null.model = 'richness', abund=F, runs=999)
-# does trait ses.mpd differ between habitats?
-grp_clay <- cut(env$clay, 5)
-par(mfrow=c(1,2))
-plot(ses$mpd.obs.z ~ env$clay, xlab='Clay fraction', ylab='Trait SES(MPD)', 
-     col=ifelse(ses$mpd.obs.p < 0.05, 'red', 'black'))
-abline(h=0, lty=2)
-text(0.2, 1, 'Divergent')
-text(0.2, -4, 'Convergent')
-plot(ses$mpd.obs.z ~ grp_clay, xlab='Clay group', ylab='Trait SES(MPD)')
-abline(h=0, lty=2)
-anova(lm(ses$mpd.obs.z ~ grp_clay))
-text(1.4, 1, 'Divergent')
-text(1.4, -4, 'Convergent')
-
+### Euclidean trait distance (traits already scaled 0-1)
+Dt  <- dist(tra, method='euc')
+### calculate trait SES of mean pairwise distances in sites
+ses <- picante::ses.mpd(spe, Dt, null.model='richness', abund=F, runs=999)
+### plot SES across the gradient
+plot(ses$mpd.obs.z ~ env$k, ylab='Trait SES(MPD)', xlab='Soil potassium', 
+     col=ifelse(ses$mpd.obs.p < 0.05, 'red','black'))
+abline(lm(ses$mpd.obs.z ~ env$k)) # regression line
+abline(h=0, lty=2)                # random-traits line
+text(0.9, 1, 'Divergent')      
+text(0.9, -4, 'Convergent')
 ```
 
 ### Make a community-weighted means matrix
@@ -929,7 +984,7 @@ ecodist::mantel(D ~ euc, mrank=T)          # spearman *rank* correlation
 
 A Mantel correlogram depicts this correlation of compositional dissimilarity at specified lag distances.
 
-```{r mantel-correlogram, exercise=TRUE, exercise.setup='mantel-orig'}
+```{r mantel-correlogram, exercise=TRUE}
 brk <- seq(0, round(max(euc),-1), by=10)
 plot(ecodist::mgram(D, euc, breaks=brk, nperm=99, mrank=T, nboot=500))
 abline(h=0, col='red')
