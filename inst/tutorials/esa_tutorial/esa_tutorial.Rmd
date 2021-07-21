@@ -51,7 +51,7 @@ grp <- defuzzify(cl, 'max')[[2]]
 m1  <- metaMDS(D, k=2, try=200, trymax=500, trace=0)  # NMS
 m2  <- cmdscale(D, k=2, add=T)               # PCoA
 m3  <- prcomp(spe)                           # PCA
-env$grp <- cut(env$k, quantile(env$k, probs=seq(0,1,by=0.25)), include.lowest=T,
+grp_k <- cut(env$k, quantile(env$k, probs=seq(0,1,by=0.25)), include.lowest=T,
                labels=c('lo','med','hi','veryhi')) # group memberships for K
 `get_palette` <- function() {
   pal <- c('#414487E6','#404688E6','#3F4889E6','#3E4989E6','#3E4C8AE6',
@@ -80,6 +80,17 @@ env$grp <- cut(env$k, quantile(env$k, probs=seq(0,1,by=0.25)), include.lowest=T,
   pal <- get_palette()
   return(pal[cut(as.numeric(x), breaks=length(pal), include.lowest=TRUE)])
 }
+`makecwm` <- function (spe, tra) {
+  spe <- as.matrix(spe)
+  tra <- as.matrix(tra)
+  `standardize` <- function(x) {
+    (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
+  }
+  tra <- apply(tra, MARGIN = 2, FUN = standardize)
+  awt <- spe %*% tra             # abundance-weighted trait totals
+  awt / rowSums(spe, na.rm=TRUE) # community-weighted traits matrix
+}
+cwm <- data.frame(makecwm(spe, tra)) # make the CWM traits matrix
 ### HIDDEN ###
 ```
 
@@ -549,22 +560,19 @@ Dimensionality selection.
 
 ```{r dimensionality-selection, exercise=TRUE}
 # define screeplot function, running NMS for varying dimensions
-`scree_nms` <- function(kk = 5, ...) {
-  stress <- rep(NA, kk)
-  for (i in 1:kk) {
-    cat('calculating', i, 'of', kk, 'dimensions...\n')
-    m <- metaMDS(D, k=i, try=200, trymax=500, trace=0)
-    stress[i] <- m$stress
+`scree_nms` <- function(D, k=5, ...) {
+  stress <- rep(NA, k)
+  for (i in 1:k) {
+    cat('calculating', i, 'of', k, 'dimensions...\n')
+    stress[i] <- metaMDS(D, k=i, trace=0, ...)$stress
   }
-  plot(1:kk, stress, main='', xlab='Dimension', ylab='Stress',
+  plot(1:k, stress, main='', xlab='Dimension', ylab='Stress',
        ylim=c(0, max(stress)*1.05), pch=16, las=1, bty='l')
-  lines(1:kk, stress)
+  lines(1:k, stress)
   abline(0.20, 0, col='red', lty = 2)
-  abline(0.15, 0, col='gold', lty = 2)
-  abline(0.10, 0, col='green', lty = 2)
   data.matrix(stress)
 }
-scree <- scree_nms(kk = 5)  # 2 dimensions seems ok...
+scree <- scree_nms(D, k=5, trymax=10)  # 2 dimensions seems ok...
 scree
 ```
 
@@ -757,13 +765,13 @@ Let's assume PERMANOVA is the best choice for comparing groups in multivariate s
 ```{r grp-define, exercise=TRUE}
 ### define and visualize four groups
 brk     <- quantile(env$k, probs=seq(0,1,by=0.25))   # define breaks
-env$grp <- cut(env$k, brk, include.lowest=T,
+grp_k <- cut(env$k, brk, include.lowest=T,
                labels=c('lo','med','hi','veryhi'))   # group memberships
-table(env$grp, useNA='always')                       # group tally
-tapply(env$k, INDEX = env$grp, FUN = mean)           # group means
+table(grp_k, useNA='always')                       # group tally
+tapply(env$k, INDEX = grp_k, FUN = mean)           # group means
 plot(m1$points, pch=NA)                              # visualize on the NMS
-text(m1$points, labels=env$grp, col=as.numeric(env$grp)) # group memberships
-ordispider(m1, groups=env$grp, col=1:4)              # group centroids 
+text(m1$points, labels=grp_k, col=as.numeric(grp_k)) # group memberships
+ordispider(m1, groups=grp_k, col=1:4)              # group centroids 
 ```
 
 ### Test for difference in community compositions
@@ -772,7 +780,7 @@ PERMANOVA tests for differences in multivariate centroid, _in the space of the c
 
 ```{r grp-diff-permanova, exercise=TRUE}
 ### permanova: test for differences in multivariate *centroid*
-a1 <- adonis(D ~ env$grp, permu=999)
+a1 <- adonis(D ~ grp_k, permu=999)
 a1
 ```
 
@@ -784,7 +792,7 @@ A related test, PERMDISP, tests for differences in multivariate dispersion, _in 
 
 ```{r grp-diff-permdisp, exercise=TRUE}
 ### permdisp: test for differences in multivariate *dispersion*
-b1 <- betadisper(D, env$grp)
+b1 <- betadisper(D, grp_k)
 b1
 permutest(b1, pairwise=TRUE, permu=999)
 boxplot(b1)
@@ -798,7 +806,7 @@ PERMANOVA works as 'regular' ANOVA when using Euclidean distances.  We'd expect 
 
 ```{r grp-diff-equivalence, exercise=TRUE}
 De <- dist(env$k, 'euc')            # Euclidean distances
-adonis(De ~ env$grp, perm=999)      # examine F and SS
+adonis(De ~ grp_k, perm=999)      # examine F and SS
 print(anova(lm(k ~ grp, env)))      # expect identical F and SS
 ```
 
@@ -813,7 +821,7 @@ plot(m1)                                       # visualize on NMS
 ordispider(m1, blk, label=TRUE)
 customperm <- how(nperm=999)                   # set number of permutations
 setBlocks(customperm) <- blk                   # permute only *within* blocks
-adonis(D ~ env$grp, permutations=customperm)   # correct test
+adonis(D ~ grp_k, permutations=customperm)   # correct test
 ```
 
 ### Key references
@@ -870,15 +878,16 @@ Dufrêne, M. and Legendre, P. 1997. Species assemblages and indicator species: t
 Recall the traits matrix, which assigns each species (rows) a value for each of twelve traits (columns):
 
 ```{r peek-traits, exercise=T}
+names(tra)
 head(tra)
+hist(tra$lfp, breaks=11)
 ```
 
 We can ask several questions about trait diversity, convergence/divergence, and relationships to environment.
 
-#### *How do traits relate to environment?*
+### Trait dissimilarity
 
-
-#### *Are traits (of species in a site) convergent or divergent?*
+#### *Are traits (for species in a site) convergent or divergent?*
 
 The mean pairwise distance (MPD) shows how far (on average) the traits of one community are relative to all others.  Most commonly these are Euclidean or Gower distances.  A randomization test gives a test statistic called SES, standardized effect size.  Significant positive SES indicates traits are less similar than expected at random (i.e., species have divergent traits), while negative SES indicates traits are more similar than expected at random (i.e., species tend to converge on similar traits). We can examine trait divergence/convergence along a gradient, or test for divergence/convergence within groups.
 
@@ -896,9 +905,11 @@ text(0.9, 1, 'Divergent')
 text(0.9, -4, 'Convergent')
 ```
 
-### Make a community-weighted means matrix
+### Nonlinear trait-environment correlations
 
-The result is a traits-by-site matrix.
+#### *How strongly are traits related to environment?*
+
+To evaluate the strength of relationship between traits and environment, we can perform ordination of sites based on traits (rather than species).  We first need to make a *community-weighted means* (*CWM*) matrix, a traits-by-site matrix whose values are trait means across the species in each site.
 
 ```{r cwm, exercise=TRUE}
 `makecwm` <- function (spe, tra) {
@@ -908,12 +919,98 @@ The result is a traits-by-site matrix.
     (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
   }
   tra <- apply(tra, MARGIN = 2, FUN = standardize)
-  awt <- spe %*% tra             # abundance-weighted trait totals
-  awt / rowSums(spe, na.rm=TRUE) # community-weighted traits matrix
+  awt <- spe %*% tra                 # abundance-weighted trait totals
+  awt / rowSums(spe, na.rm=TRUE)     # community-weighted traits matrix
+}
+cwm <- data.frame(makecwm(spe, tra)) # make the CWM traits matrix
+tabasco(cwm, col=get_palette())      # visualize
+```
+
+Ordination of the CWM matrix gives a configuration of sites in *traits space*, where distance between points indicates dissimilarity of trait compositions (trait syndromes).  Nonlinear regression of environmental variables in this traits space can give us the trait-environment correlations that we're after.
+
+```{r trait-ordination, exercise=TRUE}
+### NMS ordination of traits
+m <- metaMDS(cwm, 'altGower', k=2, trace=0)
+plot(m, cex=cwm$lfp) # plot sites in *traits space*
+
+### fit one environmental variable in traits space
+o <- ordisurf(m, env$k, col=3, add=T)
+
+### fit *all* environmental variables in traits space
+fit <- t(sapply(env, function(i) {
+  g <- summary(vegan::ordisurf(m ~ i, plot=F)) # fit GAM
+  c(`pval` = as.numeric(sprintf('%.3f',round(g$s.pv,3))),
+    `r2`   = as.numeric(sprintf('%.3f',round(g$r.sq,3))))
+}))
+cat('GAM p-values and goodness-of-fit, sorted\n',
+    '----------------------------------------\n')
+fit[rev(order(fit[,2])),]
+```
+
+Here, the environmental variables with the strongest _nonlinear_ relationship to trait compositions were potassium, sodium, and elevation.  
+
+### Fourth-corner analysis
+
+RLQ and fourth-corner analysis can also detect linear traits-environment relationships as mediated by the species abundance matrix.  There is no need to calculate the CWM matrix.  Because it boils down to a series of PCA operations, the RLQ method does not readily admit nonlinear relationships.  It is included here for completeness.
+
+```
+### the RLQ method
+o_spe <- dudi.coa(spe, scannf = FALSE, nf = 2)
+o_env <- dudi.hillsmith(env, scannf = FALSE, nf = 2, row.w = o_spe$lw)
+o_tra <- dudi.hillsmith(tra, scannf = FALSE, nf = 2, row.w = o_spe$cw)
+r     <- rlq(o_env, o_spe, o_tra, scannf = FALSE, nf = 2)
+plot(r)
+summary(r)
+randtest(r)
+fourthcorner.rlq(r, type='Q.axes')
+fourthcorner.rlq(r, type='R.axes')
+```
+
+### Phylogenetic correction of traits
+
+#### *How to remove phylogenetic relatedness from traits?*
+
+Often we suspect that close phylogenetic relatives may share similar trait values than more distantly related taxa (i.e., trait conservatism).  For further analyses it may be useful to "remove" the effects of relatedness from traits, based on the phylogenetic variance-covariance matrix.
+
+```{r phylo-correct}
+### function to do phylogenetic correction
+`phylo_corr` <- function(phy, tra, ...){
+  if (class(phy) != 'phylo') stop('phy must be of class `phylo`')
+  if (!is.data.frame(tra)) tra <- as.data.frame(tra)
+  rn <- dimnames(tra)[[1]] # species names
+  cn <- dimnames(tra)[[2]] # traits names
+  n  <- dim(tra)[[2]]    # n of traits
+  if (!identical(phy$tip.label, rn)) stop('species name mismatch')
+  G  <- ape::vcv.phylo(phy) # phylo variance-covariance matrix
+  corfac <- chol(solve(G)) # 'correction factor' per Butler et al. (2000) 
+  U  <- as.data.frame(      # initialize U for 'corrected' trait values
+    matrix(NA, nrow=dim(tra)[[1]], ncol=dim(tra)[[2]],
+           dimnames=list(rn,cn)))
+  tra <- droplevels(tra)  # drop unused factor levels
+  tra[,sapply(tra,function(x)nlevels(x)==1)] <- 1 # correct 1-level factors
+  for(j in 1:n){       # corrections per individual trait
+    M       <- model.matrix(as.formula(paste0("~0+",cn[j])), data=tra)
+    corrtra <- data.frame(corfac %*% M)
+    U[,j]   <- corrtra[rn, ,drop=FALSE]
+  }
+  return(U)
+}
+### do the correction, then compare
+p <- phylo_corr(phy, tra) 
+par(mfrow=c(2,2))
+for(i in 7:10) {
+  plot(tra[,i], p[,i], pch=16, cex=0.7, col='#00000050',
+       main=dimnames(p)[[2]][i], xlab='Original', ylab='Corrected')
 }
 ```
 
+These values can be used in further analyses.
+
 ### Key references
+
+Butler, M.A., T.W. Schoener, and J.B. Losos. 2000. The relationship between sexual size dimorphism and habitat use in Greater Antillean _Anolis_ lizards. *Evolution* 54:259-272.  
+
+Eklöf, A., and D.B. Stouffer. 2016. The phylogenetic component of food web structure and intervality. *Theoretical Ecology* 9:107–115.
 
 
 <!-- --------------------------------------------- -->
@@ -926,25 +1023,62 @@ The result is a traits-by-site matrix.
 ### Plot phylogenies
 
 ```{r phylo-plot, exercise=TRUE}
-
 ### basic plotting
+par(mfrow=c(1,3), mar=c(0,0,0,0), oma=c(0,0,0,0)) # plotting parameters
 phy                   # basic structure
 plot(phy, cex=0.75)   # basic plotting
 
 ### color tip labels by trait values
 plot(phy, cex=0.75, tip.color=colvec(tra$lfp))
-axisPhylo(cex=0.6)    # and add axis
+axisPhylo(cex=0.6)
 
-### overlay trait values at tips
-plot(phy, cex=0.75, label.offset = 12)
-tiplabels(pch = 21, bg = c(tra$annual), adj = 2)
-tiplabels(pch = 21, bg = c(tra$biennial), adj = 6)
-tiplabels(pch = 21, bg = c(tra$perennial), adj = 10)
+### symbolize trait values at tips
+plot(phy, cex=0.75, label.offset = 32)
+tiplabels(pch = 21, bg = c(tra$annual), adj = 0)
+tiplabels(pch = 21, bg = c(tra$biennial), adj = 12)
+tiplabels(pch = 21, bg = c(tra$perennial), adj = 24)
+```
 
+
+### Phylogenetic diversity - alpha
+
+According to some people, phylogenetic diversity lets you infer community assembly processes (competitive exclusion, environmental filtering, neutral dynamics).  Some other serious people seriously doubt this.
+
+```{r phy-div-alpha, exercise=T}
+### phylogenetic diversity metrics
+Dp  <- cophenetic(phy) # phylogenetic distances
+### Faith's PD phylogenetic diversity = total branch length connecting all species in a site
+fpd <- pd(spe, phy)    # Faith's PD
+### mean pairwise distance
+mpd <- ses.mpd(spe,  Dp, null.model='independentswap') 
+### mean nearest taxon distance
+mnd <- ses.mntd(spe, Dp, null.model='independentswap') 
+### bring all together
+phy_div <- cbind(fpd, mpd = mpd$mpd.obs.z, mntd = mnd$mntd.obs.z)
+head(phy_div)
+pairs(phy_div)
+```
+
+
+### Phylogenetic diversity - beta
+
+Phylogenetic Bray-Curtis dissimilarities = fraction of branch-length shared between communities.
+
+```{r phy-div-beta, exercise=T}
+### correlation between phylogenetic and taxonomic beta-diversity
+Dp <- phylosor(spe, phy) # phylogenetic distances
+protest(Dp, D)           # procrustes correlation
+
+### side-by-side NMS ordinations
+par(mfrow=c(1,2))
+plot(scores(metaMDS(D)), col=colvec(1:97), pch=19, main='Taxonomic NMS')
+plot(scores(metaMDS(Dp)), col=colvec(1:97), pch=19, main='Phylogenetic NMS')
 ```
 
 
 ### Phylogenetic signal
+
+We focus on a measure called Blomberg's _K_.  A value of _K_ > 1.0 indicates that traits of related species are more similar than expected from Brownian motion, and _K_ < 1.0 indicates traits of related species are more dissimilar than expected at random.
 
 ```{r phylo-signal, exercise=TRUE}
 ### detect phylogenetic signal for traits
@@ -953,9 +1087,6 @@ K <- sapply(tra, FUN=function(j){
   round(picante::phylosignal(j, ape::multi2di(phy)),6)})
 as.matrix(K) # Blomberg's K statistic for continuous traits
 ```
-
-### Community phylogenetic analysis
-
 
 ### Key references
 
