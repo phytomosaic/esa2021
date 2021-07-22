@@ -5,7 +5,7 @@ Authors@R:
     person(given = "Robert",
            family = "Smith",
            role = c("aut", "cre"),
-           email = "robertsmith3@usda.gov",
+           email = "robert.smith3@usda.gov",
            comment = c(ORCID = "0000-0001-5085-634X"))
 Description: ESA 2021 workshop: community analysis of species, traits, 
     phylogenies, and responses to environment.
