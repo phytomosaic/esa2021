@@ -256,7 +256,7 @@ Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linki
 
 ## Pre-analysis
 
-#### __*How do I get my data into shape for analysis?*__
+#### __*How do I get my data into shape for analysis?*__{#pre-analysis}
 
 ### Check data structure
 
@@ -358,38 +358,32 @@ all(colSums(spe, na.rm=T) != 0) # expect TRUE, no empty species
 
 ### Visualize data
 
-First, define a color palette.
-
-```{r viz-color, exercise=TRUE}
-u <- get_palette()
-```
-
 Let's map the spatial coordinates.
 
 ```{r viz-xy, exercise=TRUE}
 # spatial
-plot(xy, pch=19, col='#00000050', xlab='Eastness', ylab='Northness')
+plot(xy, pch=19, col='grey', xlab='Eastness', ylab='Northness')
 ```
 
 Plot the species abundance matrix as a heatmap.
 
 ```{r viz-spe, exercise=TRUE}
 # species
-vegan::tabasco(spe, col=u)
+vegan::tabasco(spe, col=get_palette())
 ```
 
 Plot the soils (environmental) matrix as a heatmap.
 
 ```{r viz-env, exercise=TRUE}
 # environment
-vegan::tabasco(env, col=u)
+vegan::tabasco(env, col=get_palette())
 ```
 
 Plot the traits matrix as a heatmap.
 
 ```{r viz-tra, exercise=TRUE}
 # traits
-vegan::tabasco(tra, col=u)
+vegan::tabasco(tra, col=get_palette())
 ```
 
 Plot the phylogenetic tree.
@@ -398,7 +392,6 @@ Plot the phylogenetic tree.
 # phylogeny
 plot(phy, cex=0.6, no.margin=TRUE)
 ```
-
 
 ### Key references
 
@@ -410,7 +403,7 @@ McCune, B., and J.B. Grace. 2002. _Analysis of Ecological Communities_. MjM Soft
 
 ## Diversity measures
 
-#### *How diverse is this site? many sites? region?*
+#### __*How diverse is this site? many sites? region?*__{#diversity-main}
 
 Let's examine the "diversity" of our sites and study area.  Diversity can encompass any sort of variation, e.g., taxonomic, trait, or phylogenetic.  Here we assume that `spe` is a species abundance matrix where rows = sites, columns = taxa, and values must not be negative or missing.
 
@@ -470,12 +463,12 @@ cat('Proportion of no-share sites:', propnoshare, '\n')
 
 ### Trait diversity
 
-[Here.](#traits)
+[Here.](#traits-main)
 
 
 ### Phylogenetic diversity
 
-[Here.](#phylo)
+[Here.](#phylo-main)
 
 
 ### Key references
@@ -487,7 +480,7 @@ McCune, B., and H.T. Root. 2015. Origin of the dust bunny distribution in ecolog
 
 ## Dissimilarities
 
-#### *How related are community compositions among any two sites?*
+#### __*How dissimilar are community compositions among sites?*__{#dissim-main}
 
 Dissimilarities among sites help us position sites along gradients, organize them into clusters, or distinguish differences among groups of sites.  
 
@@ -534,7 +527,7 @@ Smith, R.J. 2017. Solutions for loss of information in high-beta-diversity commu
 
 ## Ordination (unconstrained)
 
-#### *How best to order sites by dissimilarities of community compositions?*
+#### __*How best to order sites by dissimilarities of community compositions?*__{#ord-unconstrained}
 
 Order sites according to community compositions.  Ordination distances indicate compositional dissimilarities.  Nearby points are more compositionally similar than distant points.
 
@@ -640,7 +633,7 @@ Peres-Neto, P. R., and D. A. Jackson. 2001. How well do multivariate data sets m
 
 ## Ordination (constrained)
 
-#### *How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?*
+#### __*How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?*__{#ord-constrained}
 
 Constrained ordination addresses specific _a priori_ hypotheses about variation in community compositions _attributable to measured environmental gradients_.  It portrays only a fragment of all community variation, and is not used for exploratory analysis.  
 
@@ -680,20 +673,24 @@ plot(m2, disp='wa')
 points(m2, pch=16, col=u)
 plot(m3, disp='wa')
 points(m3, pch=16, col=u)
-plot(scores(m4$mu[,1:2]), pch=16, col=u, asp=4,
+plot(scores(m4$mu[,1:2]), pch=16, col=u, asp=1,
      xlab='MFSO1, potassium', ylab='MFSO2, sand')
 ```
 
 ### Key references
 
-Roberts, D.W. 2008. Statistical analysis of multidimensional fuzzy set ordinations. Ecology 89: 1246-1260.
+McArdle, B.H. & Anderson, M.J. 2001. Fitting multivariate models to community data: a comment on distance-based redundancy analysis. _Ecology_ 82: 290-297.  
+
+Roberts, D.W. 2008. Statistical analysis of multidimensional fuzzy set ordinations. _Ecology_ 89: 1246-1260.
+
+
 
 <!-- --------------------------------------------- -->
 
 
 ## Group clustering
 
-#### *How to group sites according to dissimilarity of community compositions?*
+#### __*How to group sites according to dissimilarity of community compositions?*__ {#clustering}
 
 
 ### Hierarchical: Ward's clustering
@@ -828,7 +825,7 @@ Murtagh, F., and P. Legendre. 2014. Ward's hierarchical agglomerative clustering
 
 ## Group differences
 
-#### *Do community compositions significantly differ among groups?*
+#### __*Do community compositions significantly differ among groups?*__ {#permanova}
 
 Let's assume PERMANOVA is the best choice for comparing groups in multivariate space. Other methods (ANOSIM, MRPP) exist, but PERMANOVA usually has better power and false-detection rates, even when groups may have different dispersions (Anderson and Walsh 2013) among other operational advantages.
 
@@ -904,7 +901,7 @@ Anderson, M. J., and D. C. I. Walsh. 2013. PERMANOVA, ANOSIM, and the Mantel tes
 
 ## Group indicator species
 
-#### *Which species are indicative of pre-defined groups?*
+#### __*Which species are indicative of pre-defined groups?*__ {#indval}
 
 The Indicator Value (_IndVal_) is the product of a species' fidelity and specificity to a group (Dufrêne and Legendre 1997).
 
@@ -940,10 +937,13 @@ If you defined groups by a clustering method using species information, do not u
 
 Dufrêne, M. and Legendre, P. 1997. Species assemblages and indicator species: the need for a flexible asymmetrical approach. _Ecological Monographs_ 67(3): 345--366.  
 
+de Cáceres, M., P. Legendre, and M. Moretti. 2010. Improving indicator species analysis by combining groups of sites. _Oikos_ 119:1674–1684.
+
+
 <!-- --------------------------------------------- -->
 
 
-## Community traits {#traits}
+## Community traits {#traits-main}
 
 Recall the traits matrix, which assigns each species (rows) a value for each of twelve traits (columns):
 
@@ -957,7 +957,7 @@ We can ask several questions about trait diversity, convergence/divergence, and 
 
 ### Trait dissimilarity
 
-#### *Are traits (for species in a site) convergent or divergent?*
+#### __*Are traits (for species in a site) convergent or divergent?*__ {#trait-convergent}
 
 The mean pairwise distance (MPD) shows how far (on average) the traits of one community are relative to all others.  Most commonly these are Euclidean or Gower distances.  A randomization test gives a test statistic called SES, standardized effect size.  Significant positive SES indicates traits are less similar than expected at random (i.e., species have divergent traits), while negative SES indicates traits are more similar than expected at random (i.e., species tend to converge on similar traits). We can examine trait divergence/convergence along a gradient, or test for divergence/convergence within groups.
 
@@ -977,7 +977,7 @@ text(0.9, -4, 'Convergent')
 
 ### Nonlinear trait-environment correlations
 
-#### *How strongly are traits related to environment?*
+#### __*How strongly are traits related to environment?*__ {#trait-env-corr}
 
 To evaluate the strength of relationship between traits and environment, we can perform ordination of sites based on traits (rather than species).  We first need to make a *community-weighted means* (*CWM*) matrix, a traits-by-site matrix whose values are trait means across the species in each site.
 
@@ -1038,9 +1038,9 @@ fourthcorner.rlq(r, type='R.axes')
 
 ### Phylogenetic correction of traits
 
-#### *How to remove phylogenetic relatedness from traits?*
+#### __*How to remove phylogenetic relatedness from traits?*__ {#trait-phylo-correct}
 
-Often we suspect that close phylogenetic relatives may share similar trait values than more distantly related taxa (i.e., trait conservatism).  For further analyses it may be useful to "remove" the effects of relatedness from traits, based on the phylogenetic variance-covariance matrix.
+Often we suspect that close phylogenetic relatives may share similar trait values than more distant relatives (i.e., trait conservatism).  For further analyses it may be useful to "remove" the effects of relatedness from traits, based on the phylogenetic variance-covariance matrix.
 
 ```{r phylo-correct}
 ### function to do phylogenetic correction
@@ -1074,14 +1074,12 @@ for(i in 7:10) {
 }
 ```
 
-These values can be used in further analyses.
-
 
 ### SYNCSA
 
-#### *How to remove phylogenetic relatedness from traits?*
+#### __*How do traits, environment and phylogenies relate to community assembly?*__ {#syncsa-method}
 
-The SYNCSA approach (Pillar and Duarte 2010) has been used to determine strength of evidence for different community assembly processes, based on species abundances, traits, phylogenetic relatedness, and environment.  This approach detects the strength of phylogenetic signal in traits, and of environmental filtering in traits.
+The SYNCSA approach (Pillar and Duarte 2010) uses matrix correlations among species abundances, traits, phylogenetic relatedness, and environment as evidence of different community assembly processes.  As in all of science, recall that correlation is not causation.
 
 ```{r syncsa, exercise=TRUE}
 # subset traits, for convenience
@@ -1109,33 +1107,33 @@ Pillar, V.D., and L.D.S. Duarte. 2010. A framework for metacommunity analysis of
 <!-- --------------------------------------------- -->
 
 
-## Community phylogenetics {#phylo}
+## Community phylogenetics
 
-#### *How do species' evolutionary relationships explain responses?*
+#### __*How do species' evolutionary relationships explain responses?*__ {#phylo-main}
 
 ### Plot phylogenies
 
 ```{r phylo-plot, exercise=TRUE}
 ### basic plotting
 par(mfrow=c(1,3), mar=c(0,0,0,0), oma=c(0,0,0,0)) # plotting parameters
-phy                   # basic structure
-plot(phy, cex=0.75)   # basic plotting
+phy                                               # basic structure
+plot(phy, cex=0.75, no.margin=T)                  # basic plotting
 
 ### color tip labels by trait values
-plot(phy, cex=0.75, tip.color=colvec(tra$lfp))
-axisPhylo(cex=0.6)
+plot(phy, cex=0.75, tip.color=colvec(tra$lfp), no.margin=T)
+# axisPhylo(cex=0.6)
 
 ### symbolize trait values at tips
-plot(phy, cex=0.75, label.offset = 32)
+plot(phy, cex=0.75, label.offset = 48, no.margin=T)
 tiplabels(pch = 21, bg = c(tra$annual), adj = 0)
-tiplabels(pch = 21, bg = c(tra$biennial), adj = 12)
-tiplabels(pch = 21, bg = c(tra$perennial), adj = 24)
+tiplabels(pch = 21, bg = c(tra$biennial), adj = 15)
+tiplabels(pch = 21, bg = c(tra$perennial), adj = 30)
 ```
 
 
 ### Phylogenetic diversity - alpha
 
-According to some people, phylogenetic diversity lets you infer community assembly processes (competitive exclusion, environmental filtering, neutral dynamics).  Some other serious people seriously doubt this.
+According to some people, phylogenetic diversity lets you infer community assembly processes (competitive exclusion, environmental filtering, neutral dynamics).  Some other serious people doubt this.
 
 ```{r phy-div-alpha, exercise=T}
 ### phylogenetic diversity metrics
@@ -1155,7 +1153,7 @@ pairs(phy_div)
 
 ### Phylogenetic diversity - beta
 
-Phylogenetic Bray-Curtis dissimilarities = fraction of branch-length shared between communities.
+Phylogenetic Bray-Curtis dissimilarities = fraction of branch-length shared between communities.  Different from the cophenetic branch lengths (between-species), this shows sample unit dissimilarities (between-sites).
 
 ```{r phy-div-beta, exercise=T}
 ### correlation between phylogenetic and taxonomic beta-diversity
@@ -1168,20 +1166,24 @@ plot(scores(metaMDS(D)), col=colvec(1:97), pch=19, main='Taxonomic NMS')
 plot(scores(metaMDS(Dp)), col=colvec(1:97), pch=19, main='Phylogenetic NMS')
 ```
 
-
 ### Phylogenetic signal
 
-We focus on a measure called Blomberg's _K_ to detect phylogenetic signal in traits.  A value of _K_ > 1.0 indicates that traits of related species are more similar than expected from Brownian motion, and _K_ < 1.0 indicates traits of related species are more dissimilar than expected at random.
+#### __*How similar are traits among related species?*__ {#phylo-signal}
+
+We focus on a measure called Blomberg's _K_ to detect phylogenetic signal in traits (Revell et al. 2008).  A value of _K_ > 1.0 indicates that traits of related species are more similar than expected from Brownian motion, and _K_ < 1.0 indicates traits of related species are more dissimilar than expected at random.
 
 ```{r phylo-signal, exercise=TRUE}
 ### detect phylogenetic signal for traits
 K <- sapply(tra, FUN=function(j){
   names(j) <- rownames(tra)
   round(picante::phylosignal(j, ape::multi2di(phy)),6)})
-as.matrix(K) # Blomberg's K statistic for continuous traits
+as.matrix(K)
+### Thinker: which traits have strong evidence for conservatism?
 ```
 
 ### Key references
+
+Revell, L.J., L.J. Harmon, and D.C. Collar. 2008. Phylogenetic signal, evolutionary process, and rate. _Systematic Biology_ 57:591–601.
 
 
 <!-- --------------------------------------------- -->
@@ -1189,7 +1191,7 @@ as.matrix(K) # Blomberg's K statistic for continuous traits
 
 ## Community spatial analysis
 
-#### _*To what degree are communities structured spatially?*_  
+#### __*To what degree are communities structured spatially?*__ {#spatial-mantel}
 
 ### Mantel test
 
@@ -1230,7 +1232,7 @@ ecodist::MRM(dist(spe$bolboschoenus_maritimus) ~ dist(xy) + dist(env$k), nperm=9
 
 ### PCNM: principle coordinates of neighbor matrices.
 
-#### _*How much variation is explained by space, environment, or spatially-structured environment?*_ {#pcnm}
+#### __*How much variation is explained by space, environment, or spatially-structured environment?*__ {#spatial-pcnm}
 
 We can quantify spatial distances among sites with a Euclidean distance matrix. Performing principal coordinates analysis on this "neighbor matrix" gives us PCNMs: principle coordinates of neighbor matrices.  PCNM scores are interpreted as *orthogonal* explanatory variables at varying spatial scales: think of them as progressively broad-, medium- and local-scale predictors.
 
@@ -1254,7 +1256,7 @@ msord <- mso(ord, xy)             # multiscale ordination
 msoplot(msord, expl=T)            # MSO variogram: spatial trend in residuals?
 ```
 
-Using the weighted PCNMs above, we can perform variance partitioning of species dissimilarities in dbRDA (distance-based RDA, McArdle and Anderson 2001).  This particular variation partitioning shows the amount of variation in species dissimilarities (**D**) explained by 1) space, 2) environment, and 3) spatially-structured environment.
+Using the weighted PCNMs above, we can perform variance partitioning of species dissimilarities in dbRDA.  This particular variation partitioning shows the amount of variation in species dissimilarities (**D**) explained by 1) space, 2) environment, and 3) spatially-structured environment.
 
 ```{r pcnm-varpart-01, exercise=TRUE}
 (vp <- varpart(D, env, scores(pc))) 
@@ -1303,7 +1305,6 @@ text(1.5, -0.75, 'Spatially-\nstructured\nsoil chemistry', cex=0.7)
 ###   3) env constrained spp space?
 ```
 
-
 ### Key references
 
 Borcard D. and Legendre P. 2002. All-scale spatial analysis of ecological data by means of principal coordinates of neighbour matrices. _Ecological Modelling_ 153: 51-68.
@@ -1314,19 +1315,15 @@ Lichstein, J. 2007. Multiple regression on distance matrices: a multivariate spa
 
 Mantel, N. 1967. The detection of disease clustering and a generalized regression approach. _Cancer Research_ 27:209-220.
 
-McArdle, B.H. & Anderson, M.J. 2001. Fitting multivariate models to community data: a comment on distance-based redundancy analysis. _Ecology_ 82: 290-297.
-
 Wagner, H.H. 2004. Direct multi-scale ordination with canonical correspondence analysis. _Ecology_ 85: 342-351.
 
 
 <!-- --------------------------------------------- -->
 
 
-## Appendix 1: Workflow example
+## Appendix 1: Workflow example {#workflow}
 
-### Best practices (opinionated)
-
-This workflow uses common practices in ecological community analysis.  It is by no means universal or obligatory!
+This workflow uses common best-practices in ecological community analysis.  It is somewhat opinionated, and is by no means universal or obligatory!
 
 **Data I/O:** read data into R (typically `read.csv` if CSV files, or `load` if in R binary format).
 
@@ -1334,31 +1331,31 @@ This workflow uses common practices in ecological community analysis.  It is by 
 
 **Advanced exploration:** `vegan::tabasco` or `labdsv::abuocc` to visualize species abundance matrices.
 
-**Transformations:** log~10~(_x_+1) for abundances, row-standardize abundances to put sites on equal footing, range-standardize for environment or traits (so all on same scale) -- McCune and Grace 2002
+**Transformations:** use `vegan::tabasco` for relativizations, and arithmetic for transformations.  Try log~10~(_x_+1) for abundances, row-standardize abundances to put sites on equal footing, and range-standardize for environment or traits (so all on same scale) -- McCune and Grace 2002
 
 **Outliers:** 
 sample units with mean dissimilarities > defined number of SDs from grand mean -- McCune and Grace 2002
 
-**Community dissimilarities:** Bray-Curtis -- Legendre and Legendre 2012
+**Community dissimilarities:** use `vegan::vegdist` to get Bray-Curtis dissimilarities -- Legendre and Legendre 2012
 
-**Environmental distances:** (scaled) Euclidean
+**Environmental distances:** use `scale` and `dist` to get (scaled) Euclidean distances
 
-**Dissimilarity adjustments:** step-across shortest distance if high beta-diversity -- Smith 2017
+**Dissimilarity adjustments:** use `vegan::stepacross` for step-across shortest distance in the presence of high beta-diversity -- Smith 2017
 
-**Ordination of sites, based on communities:** NMS -- Minchin 1987
+**Ordination of sites, based on communities:** use `vegan::metaMDS` for NMS -- Minchin 1987
 
-**Ordination of sites, based on environment:** PCA -- linear combinations
+**Ordination of sites, based on environment:** use `stats::prcomp` for PCA -- linear combinations
 
-**Ordination of sites, based on communities constrained by environment:** dbRDA or FSO -- McArdle and Anderson 2001 or Roberts 2008
+**Ordination of sites, based on communities constrained by environment:** use `vegan::dbrda` for dbRDA, or `fso::mfso` for FSO -- McArdle and Anderson 2001 or Roberts 2008
 
-**Comparing ordination configurations:** Procrustes -- Peres-Neto and Jackson 2001
+**Comparing ordination configurations:** use `vegan::protest` for Procrustes analysis -- Peres-Neto and Jackson 2001
 
-**Clustering:** optpart or fuzzy clustering -- de Caceres 2010 or Roberts 2015
+**Clustering:** use `vegclust::vegclust` for fuzzy clustering, or `optpart::optpart` for optimal partitioning -- de Cáceres 2010 or Roberts 2015
 
-**Group differences:** PERMANOVA -- Anderson and Walsh 2013
+**Group differences:** use `vegan::adonis2` for PERMANOVA -- Anderson and Walsh 2013
 
-**Group indicator species:** IndVal -- Dufrene and Legendre
-
+**Group indicator species:** use `labdsv::indval` for the usual single-group _IndVal_, or `indicspecies::multipatt` for multi-group _IndVal_ -- Dufrene and Legendre 1997 or 
+de Cáceres et al. 2010
 
 <!-- --------------------------------------------- -->
 
@@ -1402,11 +1399,43 @@ sample units with mean dissimilarities > defined number of SDs from grand mean -
 
 [Where did this dataset originate? How do I use it?](#data-origin)
 
-etc
+[Where did this dataset originate?](#data-origin)
 
+[How do I get my data into shape for analysis?](#pre-analysis)
 
-<!-- <!-- --------------------------------------------- --> -->
+[How diverse is this site? many sites? region?](#diversity-main)
 
+[How dissimilar are community compositions among sites?](#dissim-main)
+
+[How best to order sites by dissimilarities of community compositions?](#ord-unconstrained)
+
+[How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?](#ord-constrained)
+
+[How to group sites according to dissimilarity of community compositions?](#clustering)
+
+[Do community compositions significantly differ among groups?](#permanova)
+
+[Which species are indicative of pre-defined groups?](#indval)
+
+[Are traits (for species in a site) convergent or divergent?](#trait-convergent)
+
+[How strongly are traits related to environment?](#trait-env-corr)
+
+[How to remove phylogenetic relatedness from traits?](#trait-phylo-correct)
+
+[How do traits, environment and phylogenies relate to community assembly?](#syncsa-method)
+
+[How do species' evolutionary relationships explain responses?](#phylo-main)
+
+[How similar are traits among related species?](#phylo-signal)
+
+[To what degree are communities structured spatially?](#spatial-mantel)
+
+[How much variation is explained by space, environment, or spatially-structured environment?](#spatial-pcnm)
+
+[What is a typical workflow for ecological community analysis in R?](#workflow)
+
+<!-- --------------------------------------------- -->
 
 <!-- ## Direct gradient analysis -->
 
