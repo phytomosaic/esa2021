@@ -195,7 +195,7 @@ item_picker(z, pos = 5) # pick the fifth element of `z`
 
 ## Data
 
-#### __*Where did this dataset originate?*__ {#data-origin}
+#### __*Where did this dataset originate?*__ {#dataorigin}
 
 ### Mafragh, Algeria vegetation data
 
@@ -256,7 +256,7 @@ Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linki
 
 ## Pre-analysis
 
-#### __*How do I get my data into shape for analysis?*__{#pre-analysis}
+#### __*How do I get my data into shape for analysis?*__ {#pre-analysis}
 
 ### Check data structure
 
@@ -403,7 +403,7 @@ McCune, B., and J.B. Grace. 2002. _Analysis of Ecological Communities_. MjM Soft
 
 ## Diversity measures
 
-#### __*How diverse is this site? many sites? region?*__{#diversity-main}
+#### __*How diverse is this site? many sites? region?*__ {#diversity-main}
 
 Let's examine the "diversity" of our sites and study area.  Diversity can encompass any sort of variation, e.g., taxonomic, trait, or phylogenetic.  Here we assume that `spe` is a species abundance matrix where rows = sites, columns = taxa, and values must not be negative or missing.
 
@@ -480,7 +480,7 @@ McCune, B., and H.T. Root. 2015. Origin of the dust bunny distribution in ecolog
 
 ## Dissimilarities
 
-#### __*How dissimilar are community compositions among sites?*__{#dissim-main}
+#### __*How dissimilar are community compositions among sites?*__ {#dissim-main}
 
 Dissimilarities among sites help us position sites along gradients, organize them into clusters, or distinguish differences among groups of sites.  
 
@@ -527,7 +527,7 @@ Smith, R.J. 2017. Solutions for loss of information in high-beta-diversity commu
 
 ## Ordination (unconstrained)
 
-#### __*How best to order sites by dissimilarities of community compositions?*__{#ord-unconstrained}
+#### __*How best to order sites by dissimilarities of community compositions?*__ {#ord-unconstrained}
 
 Order sites according to community compositions.  Ordination distances indicate compositional dissimilarities.  Nearby points are more compositionally similar than distant points.
 
@@ -633,7 +633,7 @@ Peres-Neto, P. R., and D. A. Jackson. 2001. How well do multivariate data sets m
 
 ## Ordination (constrained)
 
-#### __*How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?*__{#ord-constrained}
+#### __*How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?*__ {#ord-constrained}
 
 Constrained ordination addresses specific _a priori_ hypotheses about variation in community compositions _attributable to measured environmental gradients_.  It portrays only a fragment of all community variation, and is not used for exploratory analysis.  
 
@@ -943,7 +943,9 @@ de Cáceres, M., P. Legendre, and M. Moretti. 2010. Improving indicator species 
 <!-- --------------------------------------------- -->
 
 
-## Community traits {#traits-main}
+## Community traits
+
+#### __*How do species’ evolutionary relationships explain responses?*__ {#traits-main}
 
 Recall the traits matrix, which assigns each species (rows) a value for each of twelve traits (columns):
 
@@ -1393,47 +1395,62 @@ de Cáceres et al. 2010
 <!-- --------------------------------------------- -->
 
 
-## Appendix 3: FAQ
+<!-- ## Appendix 3: FAQ -->
 
-[Why are we here today?](#why-here)
+<!-- [Why are we here today?](#why-here) -->
 
-[Where did this dataset originate? How do I use it?](#data-origin)
+<!-- [Where did this dataset originate? How do I use it?](#dataorigin) -->
 
-[Where did this dataset originate?](#data-origin)
+<!-- [Where did this dataset originate?](#data-origin) -->
 
-[How do I get my data into shape for analysis?](#pre-analysis)
+<!-- [How do I get my data into shape for analysis?](#pre-analysis) -->
 
-[How diverse is this site? many sites? region?](#diversity-main)
+<!-- [How diverse is this site? many sites? region?](#diversity-main) -->
 
-[How dissimilar are community compositions among sites?](#dissim-main)
+<!-- [How dissimilar are community compositions among sites?](#dissim-main) -->
 
-[How best to order sites by dissimilarities of community compositions?](#ord-unconstrained)
+<!-- [How best to order sites by dissimilarities of community compositions?](#ord-unconstrained) -->
 
-[How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?](#ord-constrained)
+<!-- [How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?](#ord-constrained) -->
 
-[How to group sites according to dissimilarity of community compositions?](#clustering)
+<!-- [How to group sites according to dissimilarity of community compositions?](#clustering) -->
 
-[Do community compositions significantly differ among groups?](#permanova)
+<!-- [Do community compositions significantly differ among groups?](#permanova) -->
 
-[Which species are indicative of pre-defined groups?](#indval)
+<!-- [Which species are indicative of pre-defined groups?](#indval) -->
 
-[Are traits (for species in a site) convergent or divergent?](#trait-convergent)
+<!-- [Are traits (for species in a site) convergent or divergent?](#trait-convergent) -->
 
-[How strongly are traits related to environment?](#trait-env-corr)
+<!-- [How strongly are traits related to environment?](#trait-env-corr) -->
 
-[How to remove phylogenetic relatedness from traits?](#trait-phylo-correct)
+<!-- [How to remove phylogenetic relatedness from traits?](#trait-phylo-correct) -->
 
-[How do traits, environment and phylogenies relate to community assembly?](#syncsa-method)
+<!-- [How do traits, environment and phylogenies relate to community assembly?](#syncsa-method) -->
 
-[How do species' evolutionary relationships explain responses?](#phylo-main)
+<!-- [How do species' evolutionary relationships explain responses?](#phylo-main) -->
 
-[How similar are traits among related species?](#phylo-signal)
+<!-- [How similar are traits among related species?](#phylo-signal) -->
 
-[To what degree are communities structured spatially?](#spatial-mantel)
+<!-- [To what degree are communities structured spatially?](#spatial-mantel) -->
 
-[How much variation is explained by space, environment, or spatially-structured environment?](#spatial-pcnm)
+<!-- [How much variation is explained by space, environment, or spatially-structured environment?](#spatial-pcnm) -->
 
-[What is a typical workflow for ecological community analysis in R?](#workflow)
+<!-- [What is a typical workflow for ecological community analysis in R?](#workflow) -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- --------------------------------------------- -->
 

@@ -203,7 +203,7 @@ item_picker(z, pos = 5) # pick the fifth element of `z`</code></pre>
 </div>
 <div id="section-data" class="section level2">
 <h2>Data</h2>
-<div id="section-data-origin" class="section level4">
+<div id="section-dataorigin" class="section level4">
 <h4><strong><em>Where did this dataset originate?</em></strong></h4>
 </div>
 <div id="section-mafragh-algeria-vegetation-data" class="section level3">
@@ -891,8 +891,10 @@ ceiling( ncol(spe) * 0.05 )</code></pre>
 <!-- --------------------------------------------- -->
 </div>
 </div>
-<div id="section-traits-main" class="section level2">
+<div id="section-community-traits" class="section level2">
 <h2>Community traits</h2>
+<div id="section-traits-main" class="section level4">
+<h4><strong><em>How do species’ evolutionary relationships explain responses?</em></strong></h4>
 <p>Recall the traits matrix, which assigns each species (rows) a value for each of twelve traits (columns):</p>
 <div class="tutorial-exercise" data-label="peek-traits" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
 <pre class="text"><code>names(tra)
@@ -901,6 +903,7 @@ hist(tra$lfp, breaks=11)</code></pre>
 <script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":5.5,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
 </div>
 <p>We can ask several questions about trait diversity, convergence/divergence, and relationships to environment.</p>
+</div>
 <div id="section-trait-dissimilarity" class="section level3">
 <h3>Trait dissimilarity</h3>
 <div id="section-trait-convergent" class="section level4">
@@ -1291,30 +1294,27 @@ text(1.5, -0.75, &#39;Spatially-\nstructured\nsoil chemistry&#39;, cex=0.7)
 <a href="https://cran.r-project.org/web/packages/ade4/index.html">ade4</a><br />
 <a href="https://cran.r-project.org/web/packages/ecodist/index.html">ecodist</a></p>
 <!-- --------------------------------------------- -->
-</div>
-</div>
-<div id="section-appendix-3-faq" class="section level2">
-<h2>Appendix 3: FAQ</h2>
-<p><a href="#section-why-here">Why are we here today?</a></p>
-<p><a href="#section-data-origin">Where did this dataset originate? How do I use it?</a></p>
-<p><a href="#section-data-origin">Where did this dataset originate?</a></p>
-<p><a href="#section-pre-analysis">How do I get my data into shape for analysis?</a></p>
-<p><a href="#section-diversity-main">How diverse is this site? many sites? region?</a></p>
-<p><a href="#section-dissim-main">How dissimilar are community compositions among sites?</a></p>
-<p><a href="#section-ord-unconstrained">How best to order sites by dissimilarities of community compositions?</a></p>
-<p><a href="#section-ord-constrained">How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?</a></p>
-<p><a href="#section-clustering">How to group sites according to dissimilarity of community compositions?</a></p>
-<p><a href="#section-permanova">Do community compositions significantly differ among groups?</a></p>
-<p><a href="#section-indval">Which species are indicative of pre-defined groups?</a></p>
-<p><a href="#section-trait-convergent">Are traits (for species in a site) convergent or divergent?</a></p>
-<p><a href="#section-trait-env-corr">How strongly are traits related to environment?</a></p>
-<p><a href="#section-trait-phylo-correct">How to remove phylogenetic relatedness from traits?</a></p>
-<p><a href="#section-syncsa-method">How do traits, environment and phylogenies relate to community assembly?</a></p>
-<p><a href="#section-phylo-main">How do species’ evolutionary relationships explain responses?</a></p>
-<p><a href="#section-phylo-signal">How similar are traits among related species?</a></p>
-<p><a href="#section-spatial-mantel">To what degree are communities structured spatially?</a></p>
-<p><a href="#section-spatial-pcnm">How much variation is explained by space, environment, or spatially-structured environment?</a></p>
-<p><a href="#section-workflow">What is a typical workflow for ecological community analysis in R?</a></p>
+<!-- ## Appendix 3: FAQ -->
+<!-- [Why are we here today?](#why-here) -->
+<!-- [Where did this dataset originate? How do I use it?](#dataorigin) -->
+<!-- [Where did this dataset originate?](#data-origin) -->
+<!-- [How do I get my data into shape for analysis?](#pre-analysis) -->
+<!-- [How diverse is this site? many sites? region?](#diversity-main) -->
+<!-- [How dissimilar are community compositions among sites?](#dissim-main) -->
+<!-- [How best to order sites by dissimilarities of community compositions?](#ord-unconstrained) -->
+<!-- [How best to order sites by dissimilarities of community compositions, in response to measured environmental variables?](#ord-constrained) -->
+<!-- [How to group sites according to dissimilarity of community compositions?](#clustering) -->
+<!-- [Do community compositions significantly differ among groups?](#permanova) -->
+<!-- [Which species are indicative of pre-defined groups?](#indval) -->
+<!-- [Are traits (for species in a site) convergent or divergent?](#trait-convergent) -->
+<!-- [How strongly are traits related to environment?](#trait-env-corr) -->
+<!-- [How to remove phylogenetic relatedness from traits?](#trait-phylo-correct) -->
+<!-- [How do traits, environment and phylogenies relate to community assembly?](#syncsa-method) -->
+<!-- [How do species' evolutionary relationships explain responses?](#phylo-main) -->
+<!-- [How similar are traits among related species?](#phylo-signal) -->
+<!-- [To what degree are communities structured spatially?](#spatial-mantel) -->
+<!-- [How much variation is explained by space, environment, or spatially-structured environment?](#spatial-pcnm) -->
+<!-- [What is a typical workflow for ecological community analysis in R?](#workflow) -->
 <!-- --------------------------------------------- -->
 <!-- ## Direct gradient analysis -->
 <!-- #### *How does this species (or trait, or ...) relate to an environmental gradient?* -->
@@ -1864,6 +1864,7 @@ output$`tutorial-exercise-pcnm-varpart-03-output` <- renderUI({
 {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61]}},"value":[{"type":"character","attributes":{},"value":["ade4","ape","base","bslib","cluster","compiler","datasets","digest","ecodist","ellipsis","evaluate","fastmap","fso","graphics","grDevices","grid","highr","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","labdsv","later","lattice","learnr","lifecycle","magrittr","markdown","MASS","Matrix","methods","mgcv","mime","nlme","parallel","permute","picante","promises","R6","Rcpp","rlang","rmarkdown","rprojroot","Rtsne","sass","shiny","sp","splines","stats","stringi","stringr","tools","utils","vegan","vegclust","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.7-17","5.5","4.0.3","0.2.5.1","2.1.0","4.0.3","4.0.3","0.6.27","2.0.7","0.3.2","0.14","1.1.0","2.1-1","4.0.3","4.0.3","4.0.3","0.9","0.5.1.1","1.5.3","1.6.1","0.1.4","1.7.2","1.33","2.0-1","1.2.0","0.20-41","0.10.1","1.0.0","2.0.1","1.1","7.3-53","1.2-18","4.0.3","1.8-36","0.11","3.1-149","4.0.3","0.9-5","1.8.2","1.2.0.1","2.5.0","1.0.6","0.4.11","2.9","2.0.2","0.15","0.4.0","1.6.0","1.4-5","4.0.3","4.0.3","1.6.2","1.4.0","4.0.3","4.0.3","2.5-7","2.0.0","2.4.2","0.24","1.8-4","2.2.1"]}]}]}
 </script>
 <!--/html_preserve-->
+</div>
 </div>
 
 </div> <!-- topics -->
