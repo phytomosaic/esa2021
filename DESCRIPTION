@@ -1,6 +1,6 @@
 Package: esa2021
 Title: ESA 2021 Workshop on Community Analysis in R
-Version: 0.0.1-20210226
+Version: 0.0.1-20210722
 Authors@R: 
     person(given = "Robert",
            family = "Smith",
@@ -18,7 +18,9 @@ Imports:
     vegan,
     labdsv,
     ade4,
-    optpart,
+    ecodist,
+    fso,
+    vegclust,
     ape,
     picante,
     mgcv,
