@@ -40,7 +40,7 @@ spe <- veg$spe   # species
 env <- veg$env   # environment
 tra <- veg$tra   # traits
 phy <- veg$phy   # phylogeny
-rm(veg)          # cleanup
+# rm(veg)          # cleanup
 spe <- data.frame(log10(spe + 1))
 env <- data.frame(decostand(scale(env, center=F), 'range'))
 tra <- data.frame(decostand(tra, 'range'))
@@ -118,9 +118,9 @@ We will:
 
 ### Assumptions
 
-We assume you have a basic familiarity with R.  If not, please peruse [here](http://ecology.msu.montana.edu/labdsv/R/labs/R_ecology.html).  At the least, you should be able to assign an object, distinguish between different objects (vector, matrix, data.frame, etc.), and index rows/columns of a matrix or data.frame.
+We assume you have a basic familiarity with R.  If not, please peruse [here](http://ecology.msu.montana.edu/labdsv/R/labs/R_ecology.html){target="_blank"}.  At the least, you should be able to assign an object, distinguish between different objects (vector, matrix, data.frame, etc.), and index rows/columns of a matrix or data.frame.
 
-We assume you have familiarity with basic statistics (population vs sample; mean, SD, SE, CI; simple linear models), and have at least dabbled in linear algebra (matrices; linear combinations), and perhaps become suspicious that calculus may indeed exist.  If not, you could brush up on [matrices](https://courses.lumenlearning.com/boundless-algebra/chapter/introduction-to-matrices/).
+We assume you have familiarity with basic statistics (population vs sample; mean, SD, SE, CI; simple linear models), and have at least dabbled in linear algebra (matrices; linear combinations), and perhaps become suspicious that calculus may indeed exist.  If not, you could brush up on [matrices](https://courses.lumenlearning.com/boundless-algebra/chapter/introduction-to-matrices/){target="_blank"}.
 
 ### Software installation
 
@@ -211,15 +211,15 @@ We will use one core dataset throughout this tutorial. The `veg` dataset gives i
 
 A common task in R is to read from CSV files, e.g., `x <- read.csv('path/to/file.csv')`, but here we will load data that's already in R format.
 
-```{r data-load, exercise=FALSE, eval=FALSE}
-load('veg.rda')  # assumed to be in your working dir
+```{r data-load, exercise=TRUE}
+# load('./veg.rda')  # assumed to be in your working dir
 xy  <- veg$xy    # spatial
 spe <- veg$spe   # species
 env <- veg$env   # environment
 tra <- veg$tra   # traits
 phy <- veg$phy   # phylogeny
 rm(veg)          # cleanup
-ls()             # objects now in this environment
+ls()             # objects now in this local environment
 ```
 
 ### Study area description
@@ -256,7 +256,7 @@ Pavoine, S., Vela, E., Gachet, S., de Bélair, G. and Bonsall, M. B. 2011. Linki
 
 ## Pre-analysis
 
-#### __*How do I get my data into shape for analysis?*__ {#pre-analysis}
+#### __*How do I get my data into shape for analysis?*__ {#preanalysis-shape}
 
 ### Check data structure
 
@@ -297,9 +297,8 @@ head(s)
 
 ### Data transformations
 
-```{r transformations, exercise=TRUE}
-### load data from file
-load('veg.rda')  # assumed to be in your working dir
+```{r transformations, exercise=TRUE, fig.asp=0.50}
+### load data
 spe <- veg$spe   # species
 env <- veg$env   # environment
 tra <- veg$tra   # traits
@@ -309,7 +308,7 @@ spet <- data.frame(log10(spe + 1))
 envt <- data.frame(vegan::decostand(scale(env, center=F), 'range'))
 trat <- data.frame(vegan::decostand(tra, 'range'))
 
-### compare
+### compare a few
 par(mfrow=c(1,2))
 plot(tra$bfp, trat$bfp)
 plot(env$k2o, envt$k2o)
@@ -327,7 +326,7 @@ range(s)            # is this what you expect?
 
 ### Outliers
 
-A quick way to search for _multivariate_ outliers is to use the distance/dissimilarity matrix.  An "outlier" is the sample unit(s) which exceed a defined number of SDs away from the grand mean (i.e., a large _z_-score) (McCune and Grace 2002).
+A quick way to search for _multivariate_ outliers is to use the distance/dissimilarity matrix.  A _multivariate_ outlier has unusual values for a combination of multiple variables (McCune and Grace 2002).  We can identify them as the sample unit(s) which exceed a defined number of standard deviations away from the grand mean (i.e., a large _z_-score).
 
 ```{r outliers-find, exercise=TRUE}
 ### define outlier function
@@ -461,14 +460,14 @@ cat('Proportion of no-share sites:', propnoshare, '\n')
 ```
 
 
-### Trait diversity
+<!-- ### Trait diversity -->
 
-[Here.](#traits-main)
+<!-- [Here.](#traits-main) -->
 
 
-### Phylogenetic diversity
+<!-- ### Phylogenetic diversity -->
 
-[Here.](#phylo-main)
+<!-- [Here.](#phylo-main) -->
 
 
 ### Key references
@@ -543,7 +542,7 @@ For ecological community data, NMS (Kruskal 1964) is almost always the best choi
 
 ### Visualizing ordinations
 
-```{r ordination-plotting-01, exercise=TRUE}
+```{r ordination-plotting-01, exercise=TRUE, fig.asp=0.3333}
 # color vector for plotting
 u <- get_palette()
 u <- u[1:nrow(spe)]
@@ -561,7 +560,7 @@ par(mfrow=c(1,1))
 
 Plotting again, now overlay environmental variables. 
 
-```{r ordination-plotting-02, exercise=TRUE}
+```{r ordination-plotting-02, exercise=TRUE, fig.asp=0.3333}
 ### overlay gradients on the NMS using point colors
 par(mfrow=c(1,3), bty='l', las=1)
 plot(scores(m1), pch=16, col=colvec(env$k))
@@ -1044,7 +1043,7 @@ fourthcorner.rlq(r, type='R.axes')
 
 Often we suspect that close phylogenetic relatives may share similar trait values than more distant relatives (i.e., trait conservatism).  For further analyses it may be useful to "remove" the effects of relatedness from traits, based on the phylogenetic variance-covariance matrix.
 
-```{r phylo-correct}
+```{r phylo-correct, exercise=TRUE}
 ### function to do phylogenetic correction
 `phylo_corr` <- function(phy, tra, ...){
   if (class(phy) != 'phylo') stop('phy must be of class `phylo`')
@@ -1115,7 +1114,7 @@ Pillar, V.D., and L.D.S. Duarte. 2010. A framework for metacommunity analysis of
 
 ### Plot phylogenies
 
-```{r phylo-plot, exercise=TRUE}
+```{r phylo-plot, exercise=TRUE, fig.asp=0.3333}
 ### basic plotting
 par(mfrow=c(1,3), mar=c(0,0,0,0), oma=c(0,0,0,0)) # plotting parameters
 phy                                               # basic structure
@@ -1157,7 +1156,7 @@ pairs(phy_div)
 
 Phylogenetic Bray-Curtis dissimilarities = fraction of branch-length shared between communities.  Different from the cophenetic branch lengths (between-species), this shows sample unit dissimilarities (between-sites).
 
-```{r phy-div-beta, exercise=T}
+```{r phy-div-beta, exercise=TRUE, fig.asp=0.50}
 ### correlation between phylogenetic and taxonomic beta-diversity
 Dp <- phylosor(spe, phy) # phylogenetic distances
 protest(Dp, D)           # procrustes correlation
@@ -1366,30 +1365,30 @@ de Cáceres et al. 2010
 
 #### General R usage
 
-[R for Data Science](https://r4ds.had.co.nz/)  
+[R for Data Science](https://r4ds.had.co.nz/){target="_blank"}  
 
-[Data Carpentry](https://datacarpentry.org/R-ecology-lesson/index.html)  
+[Data Carpentry](https://datacarpentry.org/R-ecology-lesson/index.html){target="_blank"}  
 
 #### Ecology in R
 
-[Dave Roberts' labdsv pages](http://ecology.msu.montana.edu/labdsv/R/)  
+[Dave Roberts' labdsv pages](http://ecology.msu.montana.edu/labdsv/R/){target="_blank"}  
 
-[Jari Oksanen's vegan introduction - PDF](https://cran.r-project.org/web/packages/vegan/vignettes/intro-vegan.pdf)  
+[Jari Oksanen's vegan introduction - PDF](https://cran.r-project.org/web/packages/vegan/vignettes/intro-vegan.pdf){target="_blank"}  
 
-[David Zelený's community analysis](http://www.davidzeleny.net/anadat-r/doku.php?id=en:start)  
+[David Zelený's community analysis](http://www.davidzeleny.net/anadat-r/doku.php?id=en:start){target="_blank"}  
 
-[Tad Fukami's ecological statistics](https://fukamilab.github.io/BIO202/)  
+[Tad Fukami's ecological statistics](https://fukamilab.github.io/BIO202/){target="_blank"}  
 
-[Steve Kembel traits and phylogenies tutorial](http://www.kembellab.ca/r-workshop/biodivR/SK_Biodiversity_R.html)
+[Steve Kembel traits and phylogenies tutorial](http://www.kembellab.ca/r-workshop/biodivR/SK_Biodiversity_R.html){target="_blank"}
 
 #### Community analysis R packages
 
-[CRAN Environmetrics Task View](https://cran.r-project.org/web/views/Environmetrics.html)  
-[vegan](https://cran.r-project.org/web/packages/vegan/index.html)  
-[labdsv](https://cran.r-project.org/web/packages/labdsv/index.html)  
-[optpart](https://cran.r-project.org/web/packages/optpart/index.html)  
-[ade4](https://cran.r-project.org/web/packages/ade4/index.html)  
-[ecodist](https://cran.r-project.org/web/packages/ecodist/index.html)  
+[CRAN Environmetrics Task View](https://cran.r-project.org/web/views/Environmetrics.html){target="_blank"}  
+[vegan](https://cran.r-project.org/web/packages/vegan/index.html){target="_blank"}  
+[labdsv](https://cran.r-project.org/web/packages/labdsv/index.html){target="_blank"}  
+[optpart](https://cran.r-project.org/web/packages/optpart/index.html){target="_blank"}  
+[ade4](https://cran.r-project.org/web/packages/ade4/index.html){target="_blank"}  
+[ecodist](https://cran.r-project.org/web/packages/ecodist/index.html){target="_blank"}  
 
 
 <!-- --------------------------------------------- -->
@@ -1403,7 +1402,7 @@ de Cáceres et al. 2010
 
 <!-- [Where did this dataset originate?](#data-origin) -->
 
-<!-- [How do I get my data into shape for analysis?](#pre-analysis) -->
+<!-- [How do I get my data into shape for analysis?](#preanalysis-shape) -->
 
 <!-- [How diverse is this site? many sites? region?](#diversity-main) -->
 
