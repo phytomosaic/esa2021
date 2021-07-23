@@ -517,7 +517,7 @@ tabasco(as.matrix(E), col=get_palette())</code></pre>
 <p>Order sites according to community compositions. Ordination distances indicate compositional dissimilarities. Nearby points are more compositionally similar than distant points.</p>
 <div class="tutorial-exercise" data-label="ordination" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
 <pre class="text"><code># three kinds of ordination
-m1 &lt;- metaMDS(D, k=2, try=200, trymax=500)  # NMS
+m1 &lt;- metaMDS(D, k=2, try=50, trymax=51, trace=0)  # NMS
 m2 &lt;- cmdscale(D, k=2, add=T)               # PCoA
 m3 &lt;- prcomp(spe)                           # PCA</code></pre>
 <script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":5.5,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":120,"exercise.checker":"NULL"}</script>
@@ -540,7 +540,7 @@ text(m2$points, rownames(m2$points),cex=.8, col=u)
 plot(m3$x, type=&#39;n&#39;, xlab=&#39;PCA1&#39;, ylab=&#39;PCA2&#39;)
 text(m3$x, rownames(m3$x),cex=.8, col=u)
 par(mfrow=c(1,1))</code></pre>
-<script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":1.8331,"fig.retina":2,"fig.asp":0.3333,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
+<script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":2.75,"fig.retina":2,"fig.asp":0.5,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
 </div>
 <p>Plotting again, now overlay environmental variables.</p>
 <div class="tutorial-exercise" data-label="ordination-plotting-02" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
@@ -555,7 +555,7 @@ par(mfrow=c(1,1))
 f1 &lt;- ordisurf(m1 ~ env$k, plot = FALSE)
 plot(scores(m1), pch = 16, col = colvec(env$k))
 plot(f1, add = TRUE, col = 1, lwd = 2)</code></pre>
-<script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":1.8331,"fig.retina":2,"fig.asp":0.3333,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
+<script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":2.75,"fig.retina":2,"fig.asp":0.5,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
 </div>
 </div>
 <div id="section-ordination-goodness-of-fit" class="section level3">
@@ -1017,34 +1017,35 @@ for(i in 7:10) {
 }</code></pre>
 <script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":5.5,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
 </div>
-</div>
-</div>
-<div id="section-syncsa" class="section level3">
-<h3>SYNCSA</h3>
-<div id="section-syncsa-method" class="section level4">
-<h4><strong><em>How do traits, environment and phylogenies relate to community assembly?</em></strong></h4>
-<p>The SYNCSA approach (Pillar and Duarte 2010) uses matrix correlations among species abundances, traits, phylogenetic relatedness, and environment as evidence of different community assembly processes. As in all of science, recall that correlation is not causation.</p>
+<!-- ### SYNCSA -->
+<!-- #### __*How do traits, environment and phylogenies relate to community assembly?*__ {#syncsa-method} -->
+<!-- The SYNCSA approach (Pillar and Duarte 2010) uses matrix correlations among species abundances, traits, phylogenetic relatedness, and environment as evidence of different community assembly processes.  As in all of science, recall that correlation is not causation. -->
+<!-- 
 <div class="tutorial-exercise" data-label="syncsa" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
-<pre class="text"><code># subset traits, for convenience
-tra &lt;- tra[,c(&#39;annual&#39;,&#39;biennial&#39;,&#39;perennial&#39;,&#39;lfp&#39;,&#39;max_height&#39;,&#39;bfp&#39;)] 
+
+```text
+# subset traits, for convenience
+tra <- tra[,c('annual','biennial','perennial','lfp','max_height','bfp')] 
 # run SYNCSA
-res &lt;- syncsa(comm       = spe,
+res <- syncsa(comm       = spe,
                traits    = tra,
                phylo     = cophenetic(phy),
                envir     = env,
-               ro.method = &#39;procrustes&#39;,
+               ro.method = 'procrustes',
                permu     = 199)
 # view result
-res</code></pre>
-<script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":5.5,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script>
-</div>
+res
+```
+
+<script type="application/json" data-opts-chunk="1">{"fig.width":5.5,"fig.height":5.5,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":"99%","warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.timelimit":10,"exercise.checker":"NULL"}</script></div>
+-->
 </div>
 </div>
 <div id="section-key-references-9" class="section level3">
 <h3>Key references</h3>
 <p>Butler, M.A., T.W. Schoener, and J.B. Losos. 2000. The relationship between sexual size dimorphism and habitat use in Greater Antillean <em>Anolis</em> lizards. <em>Evolution</em> 54:259-272.</p>
 <p>Eklöf, A., and D.B. Stouffer. 2016. The phylogenetic component of food web structure and intervality. <em>Theoretical Ecology</em> 9:107–115.</p>
-<p>Pillar, V.D., and L.D.S. Duarte. 2010. A framework for metacommunity analysis of phylogenetic structure. <em>Ecology Letters</em> 13:587–596.</p>
+<!-- Pillar, V.D., and L.D.S. Duarte. 2010. A framework for metacommunity analysis of phylogenetic structure. *Ecology Letters* 13:587–596. -->
 <!-- --------------------------------------------- -->
 </div>
 </div>

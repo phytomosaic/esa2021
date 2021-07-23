@@ -532,7 +532,7 @@ Order sites according to community compositions.  Ordination distances indicate 
 
 ```{r ordination, exercise=TRUE, exercise.timelimit=120}
 # three kinds of ordination
-m1 <- metaMDS(D, k=2, try=200, trymax=500)  # NMS
+m1 <- metaMDS(D, k=2, try=50, trymax=51, trace=0)  # NMS
 m2 <- cmdscale(D, k=2, add=T)               # PCoA
 m3 <- prcomp(spe)                           # PCA
 ```
@@ -542,7 +542,7 @@ For ecological community data, NMS (Kruskal 1964) is almost always the best choi
 
 ### Visualizing ordinations
 
-```{r ordination-plotting-01, exercise=TRUE, fig.asp=0.3333}
+```{r ordination-plotting-01, exercise=TRUE, fig.asp=0.50}
 # color vector for plotting
 u <- get_palette()
 u <- u[1:nrow(spe)]
@@ -560,7 +560,7 @@ par(mfrow=c(1,1))
 
 Plotting again, now overlay environmental variables. 
 
-```{r ordination-plotting-02, exercise=TRUE, fig.asp=0.3333}
+```{r ordination-plotting-02, exercise=TRUE, fig.asp=0.50}
 ### overlay gradients on the NMS using point colors
 par(mfrow=c(1,3), bty='l', las=1)
 plot(scores(m1), pch=16, col=colvec(env$k))
@@ -1076,12 +1076,13 @@ for(i in 7:10) {
 ```
 
 
-### SYNCSA
+<!-- ### SYNCSA -->
 
-#### __*How do traits, environment and phylogenies relate to community assembly?*__ {#syncsa-method}
+<!-- #### __*How do traits, environment and phylogenies relate to community assembly?*__ {#syncsa-method} -->
 
-The SYNCSA approach (Pillar and Duarte 2010) uses matrix correlations among species abundances, traits, phylogenetic relatedness, and environment as evidence of different community assembly processes.  As in all of science, recall that correlation is not causation.
+<!-- The SYNCSA approach (Pillar and Duarte 2010) uses matrix correlations among species abundances, traits, phylogenetic relatedness, and environment as evidence of different community assembly processes.  As in all of science, recall that correlation is not causation. -->
 
+<!-- 
 ```{r syncsa, exercise=TRUE}
 # subset traits, for convenience
 tra <- tra[,c('annual','biennial','perennial','lfp','max_height','bfp')] 
@@ -1094,7 +1095,8 @@ res <- syncsa(comm       = spe,
                permu     = 199)
 # view result
 res
-```
+``` 
+-->
 
 ### Key references
 
@@ -1102,7 +1104,7 @@ Butler, M.A., T.W. Schoener, and J.B. Losos. 2000. The relationship between sexu
 
 Eklöf, A., and D.B. Stouffer. 2016. The phylogenetic component of food web structure and intervality. *Theoretical Ecology* 9:107–115.
 
-Pillar, V.D., and L.D.S. Duarte. 2010. A framework for metacommunity analysis of phylogenetic structure. *Ecology Letters* 13:587–596.
+<!-- Pillar, V.D., and L.D.S. Duarte. 2010. A framework for metacommunity analysis of phylogenetic structure. *Ecology Letters* 13:587–596. -->
 
 
 <!-- --------------------------------------------- -->
