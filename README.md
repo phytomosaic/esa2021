@@ -9,7 +9,7 @@ We will use a dedicated **R** package that contains tutorial material.  Install 
 1.  Download and install **R** from: https://cran.r-project.org/  
 2.  Download and install **Rstudio** from: https://www.rstudio.com/products/rstudio/download/#download  
 3.  Download our **esa2021** package from:  https://github.com/phytomosaic/taresa2021/raw/main/esa2021_0.0.1-20210722.tar.gz and save somewhere you will remember.  
-4.  Open the **R** console, then run:  
+4.  Open the **Rstudio** console, then run:  
 
 ```
 ### install dependencies
